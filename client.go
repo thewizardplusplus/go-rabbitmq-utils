@@ -49,6 +49,22 @@ func (client Client) PublishMessage(queue string, message interface{}) error {
 	return nil
 }
 
+// ConsumeMessages ...
+func (client Client) ConsumeMessages(queue string) (
+	<-chan amqp.Delivery,
+	error,
+) {
+	return client.channel.Consume(
+		queue,             // queue name
+		queue+"_consumer", // consumer name
+		false,             // auto-acknowledge
+		false,             // exclusive
+		false,             // no local
+		false,             // no wait
+		nil,               // arguments
+	)
+}
+
 // Close ...
 func (client Client) Close() error {
 	if err := client.channel.Close(); err != nil {
