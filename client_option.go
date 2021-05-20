@@ -8,3 +8,10 @@ type ClientOptions struct {
 
 // ClientOption ...
 type ClientOption func(options *ClientOptions)
+
+// WithMaximalQueueSize ...
+func WithMaximalQueueSize(maximalQueueSize int) ClientOption {
+	return func(options *ClientOptions) {
+		options.maximalQueueSize = maximalQueueSize
+	}
+}
