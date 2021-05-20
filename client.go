@@ -55,21 +55,21 @@ func (client Client) ConsumeMessages(queue string) (
 	error,
 ) {
 	return client.channel.Consume(
-		queue,             // queue name
-		queue+"_consumer", // consumer name
-		false,             // auto-acknowledge
-		false,             // exclusive
-		false,             // no local
-		false,             // no wait
-		nil,               // arguments
+		queue,                   // queue name
+		makeConsumerName(queue), // consumer name
+		false,                   // auto-acknowledge
+		false,                   // exclusive
+		false,                   // no local
+		false,                   // no wait
+		nil,                     // arguments
 	)
 }
 
 // CancelConsuming ...
 func (client Client) CancelConsuming(queue string) error {
 	return client.channel.Cancel(
-		queue+"_consumer", // consumer name
-		false,             // no wait
+		makeConsumerName(queue), // consumer name
+		false,                   // no wait
 	)
 }
 
@@ -84,4 +84,8 @@ func (client Client) Close() error {
 	}
 
 	return nil
+}
+
+func makeConsumerName(queue string) string {
+	return queue + "_consumer"
 }
