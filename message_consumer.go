@@ -2,6 +2,7 @@ package rabbitmqutils
 
 import (
 	"context"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
@@ -50,6 +51,23 @@ func (consumer MessageConsumer) Start() {
 	for message := range consumer.messages {
 		consumer.messageHandler.HandleMessage(message)
 	}
+}
+
+// StartConcurrently ...
+func (consumer MessageConsumer) StartConcurrently(concurrency int) {
+	var waitGroup sync.WaitGroup
+	waitGroup.Add(concurrency)
+
+	for i := 0; i < concurrency; i++ {
+		go func() {
+			defer waitGroup.Done()
+
+			consumer.Start()
+		}()
+	}
+
+	waitGroup.Wait()
+	consumer.stoppingCtxCanceller()
 }
 
 // Stop ...
