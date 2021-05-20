@@ -26,3 +26,16 @@ func NewClient(dsn string) (Client, error) {
 	client := Client{connection: connection, channel: channel}
 	return client, nil
 }
+
+// Close ...
+func (client Client) Close() error {
+	if err := client.channel.Close(); err != nil {
+		return errors.Wrap(err, "unable to close the channel")
+	}
+
+	if err := client.connection.Close(); err != nil {
+		return errors.Wrap(err, "unable to close the connection")
+	}
+
+	return nil
+}
