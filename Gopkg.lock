@@ -197,6 +197,14 @@
   version = "v1.7.1"
 
 [[projects]]
+  digest = "1:5ca236e4ecfeb92a57b7a4c7f139023384e7f726640f61b17820473cc82dfb77"
+  name = "github.com/streadway/amqp"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "1c71cc93ed716f9a6f4c2ae8955c25f9176d9f19"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:f4b32291cad5efac2bfdba89ccde6aa04618b62ce06c1a571da2dc4f3f2677fb"
   name = "github.com/subosito/gotenv"
   packages = ["."]
@@ -340,6 +348,7 @@
   input-imports = [
     "github.com/alecthomas/gometalinter",
     "github.com/cweill/gotests/gotests",
+    "github.com/streadway/amqp",
     "github.com/vektra/mockery/cmd",
   ]
   solver-name = "gps-cdcl"
