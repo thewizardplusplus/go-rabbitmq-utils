@@ -29,6 +29,44 @@ func NewClient(dsn string) (Client, error) {
 	return client, nil
 }
 
+// NewClientWithOptions ...
+func NewClientWithOptions(dsn string, options ...ClientOption) (Client, error) {
+	var clientOptions ClientOptions
+	for _, option := range options {
+		option(&clientOptions)
+	}
+
+	client, err := NewClient(dsn)
+	if err != nil {
+		return Client{}, err
+	}
+
+	if clientOptions.maximalQueueSize != 0 {
+		if err := client.channel.Qos(
+			clientOptions.maximalQueueSize, // prefetch count
+			0,                              // prefetch size
+			false,                          // global
+		); err != nil {
+			return Client{}, errors.Wrap(err, "unable to set the maximal queue size")
+		}
+	}
+
+	for _, queue := range clientOptions.queues {
+		if _, err := client.channel.QueueDeclare(
+			queue, // queue name
+			true,  // durable
+			false, // auto-delete
+			false, // exclusive
+			false, // no wait
+			nil,   // arguments
+		); err != nil {
+			return Client{}, errors.Wrapf(err, "unable to declare queue %q", queue)
+		}
+	}
+
+	return client, nil
+}
+
 // PublishMessage ...
 func (client Client) PublishMessage(queue string, message interface{}) error {
 	messageAsJSON, err := json.Marshal(message)
