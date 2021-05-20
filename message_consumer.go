@@ -45,6 +45,13 @@ func NewMessageConsumer(
 	return messageConsumer, nil
 }
 
+// Start ...
+func (consumer MessageConsumer) Start() {
+	for message := range consumer.messages {
+		consumer.messageHandler.HandleMessage(message)
+	}
+}
+
 // Stop ...
 func (consumer MessageConsumer) Stop() error {
 	if err := consumer.client.CancelConsuming(consumer.queue); err != nil {
