@@ -65,6 +65,14 @@ func (client Client) ConsumeMessages(queue string) (
 	)
 }
 
+// CancelConsuming ...
+func (client Client) CancelConsuming(queue string) error {
+	return client.channel.Cancel(
+		queue+"_consumer", // consumer name
+		false,             // no wait
+	)
+}
+
 // Close ...
 func (client Client) Close() error {
 	if err := client.channel.Close(); err != nil {
