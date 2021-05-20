@@ -44,3 +44,13 @@ func NewMessageConsumer(
 	}
 	return messageConsumer, nil
 }
+
+// Stop ...
+func (consumer MessageConsumer) Stop() error {
+	if err := consumer.client.CancelConsuming(consumer.queue); err != nil {
+		return errors.Wrap(err, "unable to cancel the consuming")
+	}
+
+	<-consumer.stoppingCtx.Done()
+	return nil
+}
