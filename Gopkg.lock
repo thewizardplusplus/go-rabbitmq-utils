@@ -348,6 +348,7 @@
   input-imports = [
     "github.com/alecthomas/gometalinter",
     "github.com/cweill/gotests/gotests",
+    "github.com/pkg/errors",
     "github.com/streadway/amqp",
     "github.com/vektra/mockery/cmd",
   ]

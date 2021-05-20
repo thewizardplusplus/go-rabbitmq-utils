@@ -11,3 +11,7 @@ required = [
 [[constraint]]
   name = "github.com/streadway/amqp"
   version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/pkg/errors"
+  version = "0.9.1"
