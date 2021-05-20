@@ -15,3 +15,10 @@ func WithMaximalQueueSize(maximalQueueSize int) ClientOption {
 		options.maximalQueueSize = maximalQueueSize
 	}
 }
+
+// WithQueues ...
+func WithQueues(queues []string) ClientOption {
+	return func(options *ClientOptions) {
+		options.queues = queues
+	}
+}
