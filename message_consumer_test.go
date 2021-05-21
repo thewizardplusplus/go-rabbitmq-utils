@@ -2,6 +2,7 @@ package rabbitmqutils
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"testing/iotest"
 
@@ -175,7 +176,132 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 		fields fields
 		args   args
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success with the messages and without concurrency",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					var messagesAsSlice []amqp.Delivery
+					for i := 0; i < 100; i++ {
+						messagesAsSlice = append(messagesAsSlice, amqp.Delivery{
+							Body: []byte(fmt.Sprintf("message #%d", i)),
+						})
+					}
+
+					messages := make(chan amqp.Delivery, len(messagesAsSlice))
+					for _, message := range messagesAsSlice {
+						messages <- message
+					}
+
+					close(messages)
+					return messages
+				}(),
+				messageHandler: func() MessageHandler {
+					messageHandler := new(MockMessageHandler)
+					for i := 0; i < 100; i++ {
+						messageHandler.
+							On("HandleMessage", amqp.Delivery{
+								Body: []byte(fmt.Sprintf("message #%d", i)),
+							}).
+							Return()
+					}
+
+					return messageHandler
+				}(),
+				stoppingCtxCanceller: func() ContextCancellerInterface {
+					stoppingCtxCanceller := new(MockContextCancellerInterface)
+					stoppingCtxCanceller.On("CancelContext").Return()
+
+					return stoppingCtxCanceller
+				}(),
+			},
+			args: args{
+				concurrency: 1,
+			},
+		},
+		{
+			name: "success with the messages and concurrency",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					var messagesAsSlice []amqp.Delivery
+					for i := 0; i < 100; i++ {
+						messagesAsSlice = append(messagesAsSlice, amqp.Delivery{
+							Body: []byte(fmt.Sprintf("message #%d", i)),
+						})
+					}
+
+					messages := make(chan amqp.Delivery, len(messagesAsSlice))
+					for _, message := range messagesAsSlice {
+						messages <- message
+					}
+
+					close(messages)
+					return messages
+				}(),
+				messageHandler: func() MessageHandler {
+					messageHandler := new(MockMessageHandler)
+					for i := 0; i < 100; i++ {
+						messageHandler.
+							On("HandleMessage", amqp.Delivery{
+								Body: []byte(fmt.Sprintf("message #%d", i)),
+							}).
+							Return()
+					}
+
+					return messageHandler
+				}(),
+				stoppingCtxCanceller: func() ContextCancellerInterface {
+					stoppingCtxCanceller := new(MockContextCancellerInterface)
+					stoppingCtxCanceller.On("CancelContext").Return()
+
+					return stoppingCtxCanceller
+				}(),
+			},
+			args: args{
+				concurrency: 5,
+			},
+		},
+		{
+			name: "success without messages and concurrency",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					messages := make(chan amqp.Delivery)
+					close(messages)
+
+					return messages
+				}(),
+				messageHandler: new(MockMessageHandler),
+				stoppingCtxCanceller: func() ContextCancellerInterface {
+					stoppingCtxCanceller := new(MockContextCancellerInterface)
+					stoppingCtxCanceller.On("CancelContext").Return()
+
+					return stoppingCtxCanceller
+				}(),
+			},
+			args: args{
+				concurrency: 1,
+			},
+		},
+		{
+			name: "success without messages and with concurrency",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					messages := make(chan amqp.Delivery)
+					close(messages)
+
+					return messages
+				}(),
+				messageHandler: new(MockMessageHandler),
+				stoppingCtxCanceller: func() ContextCancellerInterface {
+					stoppingCtxCanceller := new(MockContextCancellerInterface)
+					stoppingCtxCanceller.On("CancelContext").Return()
+
+					return stoppingCtxCanceller
+				}(),
+			},
+			args: args{
+				concurrency: 5,
+			},
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			consumer := MessageConsumer{
