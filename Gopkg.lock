@@ -221,9 +221,20 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:edb231f4f062fe87e1cc93351e1ee06d4cebf553d1f85f9f3b9b4903df42df20"
+  digest = "1:86ff4af7b6bb3d27c2e89b5ef8c139678acff1cad74a3c5235fc5af6b94fcc9e"
+  name = "github.com/stretchr/objx"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "35313a95ee26395aa17d366c71a2ccf788fa69b6"
+  version = "v0.3.0"
+
+[[projects]]
+  digest = "1:e5992fcc545f44348e54526599ceb97d83da86754f1f1faa8c96de047b523300"
   name = "github.com/stretchr/testify"
-  packages = ["assert"]
+  packages = [
+    "assert",
+    "mock",
+  ]
   pruneopts = "UT"
   revision = "acba37e5db06f0093b465a7d47822bf13644b66c"
   version = "v1.7.0"
@@ -383,6 +394,7 @@
     "github.com/pkg/errors",
     "github.com/streadway/amqp",
     "github.com/stretchr/testify/assert",
+    "github.com/stretchr/testify/mock",
     "github.com/vektra/mockery/cmd",
   ]
   solver-name = "gps-cdcl"
