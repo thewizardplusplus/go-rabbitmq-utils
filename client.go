@@ -13,6 +13,37 @@ type MessageBrokerConnection interface {
 	Close() error
 }
 
+// MessageBrokerChannel ...
+type MessageBrokerChannel interface {
+	Qos(prefetchCount int, prefetchSize int, global bool) error
+	QueueDeclare(
+		queueName string,
+		durable bool,
+		autoDelete bool,
+		exclusive bool,
+		noWait bool,
+		arguments amqp.Table,
+	) (amqp.Queue, error)
+	Publish(
+		exchange string,
+		queueName string,
+		mandatory bool,
+		immediate bool,
+		message amqp.Publishing,
+	) error
+	Consume(
+		queueName string,
+		consumerName string,
+		autoAcknowledge bool,
+		exclusive bool,
+		noLocal bool,
+		noWait bool,
+		arguments amqp.Table,
+	) (<-chan amqp.Delivery, error)
+	Cancel(consumerName string, noWait bool) error
+	Close() error
+}
+
 // Client ...
 type Client struct {
 	connection MessageBrokerConnection
