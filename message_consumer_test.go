@@ -96,6 +96,30 @@ func TestNewMessageConsumer(test *testing.T) {
 	}
 }
 
+func TestMessageConsumer_Start(test *testing.T) {
+	type fields struct {
+		messages       <-chan amqp.Delivery
+		messageHandler MessageHandler
+	}
+
+	for _, data := range []struct {
+		name   string
+		fields fields
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			consumer := MessageConsumer{
+				messages:       data.fields.messages,
+				messageHandler: data.fields.messageHandler,
+			}
+			consumer.Start()
+
+			mock.AssertExpectationsForObjects(test, data.fields.messageHandler)
+		})
+	}
+}
+
 func TestMessageConsumer_Stop(test *testing.T) {
 	type fields struct {
 		client      MessageConsumerClient
