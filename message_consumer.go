@@ -8,6 +8,12 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// MessageConsumerClient ...
+type MessageConsumerClient interface {
+	ConsumeMessages(queue string) (<-chan amqp.Delivery, error)
+	CancelConsuming(queue string) error
+}
+
 // MessageHandler ...
 type MessageHandler interface {
 	HandleMessage(message amqp.Delivery)
