@@ -7,6 +7,12 @@ import (
 	"github.com/streadway/amqp"
 )
 
+// MessageBrokerConnection ...
+type MessageBrokerConnection interface {
+	Channel() (*amqp.Channel, error)
+	Close() error
+}
+
 // Client ...
 type Client struct {
 	connection *amqp.Connection
