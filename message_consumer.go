@@ -8,6 +8,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
+//go:generate mockery --name=MessageConsumerClient --inpackage --case=underscore --testonly
+
 // MessageConsumerClient ...
 type MessageConsumerClient interface {
 	ConsumeMessages(queue string) (<-chan amqp.Delivery, error)
