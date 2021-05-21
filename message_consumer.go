@@ -21,7 +21,7 @@ type MessageHandler interface {
 
 // MessageConsumer ...
 type MessageConsumer struct {
-	client               Client
+	client               MessageConsumerClient
 	queue                string
 	messages             <-chan amqp.Delivery
 	messageHandler       MessageHandler
@@ -31,7 +31,7 @@ type MessageConsumer struct {
 
 // NewMessageConsumer ...
 func NewMessageConsumer(
-	client Client,
+	client MessageConsumerClient,
 	queue string,
 	messageHandler MessageHandler,
 ) (MessageConsumer, error) {
