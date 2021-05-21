@@ -47,7 +47,7 @@ type MessageBrokerChannel interface {
 // Client ...
 type Client struct {
 	connection MessageBrokerConnection
-	channel    *amqp.Channel
+	channel    MessageBrokerChannel
 }
 
 // NewClient ...
