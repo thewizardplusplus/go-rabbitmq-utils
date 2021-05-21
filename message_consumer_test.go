@@ -106,7 +106,47 @@ func TestMessageConsumer_Start(test *testing.T) {
 		name   string
 		fields fields
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success with the messages",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					messagesAsSlice := []amqp.Delivery{
+						{Body: []byte("one")},
+						{Body: []byte("two")},
+					}
+					messages := make(chan amqp.Delivery, len(messagesAsSlice))
+					for _, message := range messagesAsSlice {
+						messages <- message
+					}
+
+					close(messages)
+					return messages
+				}(),
+				messageHandler: func() MessageHandler {
+					messageHandler := new(MockMessageHandler)
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("one")}).
+						Return()
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("two")}).
+						Return()
+
+					return messageHandler
+				}(),
+			},
+		},
+		{
+			name: "success without messages",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					messages := make(chan amqp.Delivery)
+					close(messages)
+
+					return messages
+				}(),
+				messageHandler: new(MockMessageHandler),
+			},
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			consumer := MessageConsumer{
