@@ -160,6 +160,40 @@ func TestMessageConsumer_Start(test *testing.T) {
 	}
 }
 
+func TestMessageConsumer_StartConcurrently(test *testing.T) {
+	type fields struct {
+		messages             <-chan amqp.Delivery
+		messageHandler       MessageHandler
+		stoppingCtxCanceller ContextCancellerInterface
+	}
+	type args struct {
+		concurrency int
+	}
+
+	for _, data := range []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			consumer := MessageConsumer{
+				messages:             data.fields.messages,
+				messageHandler:       data.fields.messageHandler,
+				stoppingCtxCanceller: data.fields.stoppingCtxCanceller.CancelContext,
+			}
+			consumer.StartConcurrently(data.args.concurrency)
+
+			mock.AssertExpectationsForObjects(
+				test,
+				data.fields.messageHandler,
+				data.fields.stoppingCtxCanceller,
+			)
+		})
+	}
+}
+
 func TestMessageConsumer_Stop(test *testing.T) {
 	type fields struct {
 		client      MessageConsumerClient
