@@ -1,6 +1,7 @@
 package rabbitmqutils
 
 import (
+	"context"
 	"testing"
 	"testing/iotest"
 
@@ -90,6 +91,34 @@ func TestNewMessageConsumer(test *testing.T) {
 				data.args.messageHandler,
 			)
 			data.wantedMessageConsumer(test, receivedMessageConsumer)
+			data.wantedErr(test, receivedErr)
+		})
+	}
+}
+
+func TestMessageConsumer_Stop(test *testing.T) {
+	type fields struct {
+		client      MessageConsumerClient
+		queue       string
+		stoppingCtx context.Context
+	}
+
+	for _, data := range []struct {
+		name      string
+		fields    fields
+		wantedErr assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			consumer := MessageConsumer{
+				client:      data.fields.client,
+				queue:       data.fields.queue,
+				stoppingCtx: data.fields.stoppingCtx,
+			}
+			receivedErr := consumer.Stop()
+
+			mock.AssertExpectationsForObjects(test, data.fields.client)
 			data.wantedErr(test, receivedErr)
 		})
 	}
