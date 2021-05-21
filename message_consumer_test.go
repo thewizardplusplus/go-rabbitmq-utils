@@ -108,7 +108,39 @@ func TestMessageConsumer_Stop(test *testing.T) {
 		fields    fields
 		wantedErr assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				client: func() MessageConsumerClient {
+					client := new(MockMessageConsumerClient)
+					client.On("CancelConsuming", "test").Return(nil)
+
+					return client
+				}(),
+				queue: "test",
+				stoppingCtx: func() context.Context {
+					ctx, canceller := context.WithCancel(context.Background())
+					canceller()
+
+					return ctx
+				}(),
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "error",
+			fields: fields{
+				client: func() MessageConsumerClient {
+					client := new(MockMessageConsumerClient)
+					client.On("CancelConsuming", "test").Return(iotest.ErrTimeout)
+
+					return client
+				}(),
+				queue:       "test",
+				stoppingCtx: context.Background(),
+			},
+			wantedErr: assert.Error,
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			consumer := MessageConsumer{
