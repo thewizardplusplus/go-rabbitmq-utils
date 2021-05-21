@@ -16,6 +16,8 @@ type MessageConsumerClient interface {
 	CancelConsuming(queue string) error
 }
 
+//go:generate mockery --name=MessageHandler --inpackage --case=underscore --testonly
+
 // MessageHandler ...
 type MessageHandler interface {
 	HandleMessage(message amqp.Delivery)
