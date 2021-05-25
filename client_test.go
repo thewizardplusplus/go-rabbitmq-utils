@@ -127,7 +127,48 @@ func TestClient_CancelConsuming(test *testing.T) {
 		args      args
 		wantedErr assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Cancel",
+							"test_consumer", // consumer name
+							false,           // no wait
+						).
+						Return(nil)
+
+					return channel
+				}(),
+			},
+			args: args{
+				queue: "test",
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "error",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Cancel",
+							"test_consumer", // consumer name
+							false,           // no wait
+						).
+						Return(iotest.ErrTimeout)
+
+					return channel
+				}(),
+			},
+			args: args{
+				queue: "test",
+			},
+			wantedErr: assert.Error,
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
