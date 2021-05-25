@@ -181,3 +181,33 @@ func TestClient_CancelConsuming(test *testing.T) {
 		})
 	}
 }
+
+func TestClient_Close(test *testing.T) {
+	type fields struct {
+		connection MessageBrokerConnection
+		channel    MessageBrokerChannel
+	}
+
+	for _, data := range []struct {
+		name      string
+		fields    fields
+		wantedErr assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			client := Client{
+				connection: data.fields.connection,
+				channel:    data.fields.channel,
+			}
+			receivedErr := client.Close()
+
+			mock.AssertExpectationsForObjects(
+				test,
+				data.fields.connection,
+				data.fields.channel,
+			)
+			data.wantedErr(test, receivedErr)
+		})
+	}
+}
