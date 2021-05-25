@@ -112,3 +112,31 @@ func TestClient_ConsumeMessages(test *testing.T) {
 		})
 	}
 }
+
+func TestClient_CancelConsuming(test *testing.T) {
+	type fields struct {
+		channel MessageBrokerChannel
+	}
+	type args struct {
+		queue string
+	}
+
+	for _, data := range []struct {
+		name      string
+		fields    fields
+		args      args
+		wantedErr assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			client := Client{
+				channel: data.fields.channel,
+			}
+			receivedErr := client.CancelConsuming(data.args.queue)
+
+			mock.AssertExpectationsForObjects(test, data.fields.channel)
+			data.wantedErr(test, receivedErr)
+		})
+	}
+}
