@@ -9,6 +9,39 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestClient_PublishMessage(test *testing.T) {
+	type fields struct {
+		channel MessageBrokerChannel
+	}
+	type args struct {
+		queue   string
+		message interface{}
+	}
+	type testMessage struct {
+		FieldOne int
+		FieldTwo string
+	}
+
+	for _, data := range []struct {
+		name      string
+		fields    fields
+		args      args
+		wantedErr assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			client := Client{
+				channel: data.fields.channel,
+			}
+			receivedErr := client.PublishMessage(data.args.queue, data.args.message)
+
+			mock.AssertExpectationsForObjects(test, data.fields.channel)
+			data.wantedErr(test, receivedErr)
+		})
+	}
+}
+
 func TestClient_ConsumeMessages(test *testing.T) {
 	type fields struct {
 		channel MessageBrokerChannel
