@@ -28,7 +28,73 @@ func TestClient_PublishMessage(test *testing.T) {
 		args      args
 		wantedErr assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Publish",
+							"",    // exchange
+							"one", // queue name
+							false, // mandatory
+							false, // immediate
+							amqp.Publishing{
+								ContentType: "application/json",
+								Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
+							},
+						).
+						Return(nil)
+
+					return channel
+				}(),
+			},
+			args: args{
+				queue:   "one",
+				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "error with marshalling",
+			fields: fields{
+				channel: new(MockMessageBrokerChannel),
+			},
+			args: args{
+				queue:   "one",
+				message: func() {},
+			},
+			wantedErr: assert.Error,
+		},
+		{
+			name: "error with publishing",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Publish",
+							"",    // exchange
+							"one", // queue name
+							false, // mandatory
+							false, // immediate
+							amqp.Publishing{
+								ContentType: "application/json",
+								Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
+							},
+						).
+						Return(iotest.ErrTimeout)
+
+					return channel
+				}(),
+			},
+			args: args{
+				queue:   "one",
+				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+			},
+			wantedErr: assert.Error,
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
