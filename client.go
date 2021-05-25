@@ -15,6 +15,8 @@ type MessageBrokerConnection interface {
 	Close() error
 }
 
+//go:generate mockery --name=MessageBrokerChannel --inpackage --case=underscore --testonly
+
 // MessageBrokerChannel ...
 type MessageBrokerChannel interface {
 	Qos(prefetchCount int, prefetchSize int, global bool) error
