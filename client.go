@@ -7,6 +7,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
+//go:generate mockery --name=MessageBrokerConnection --inpackage --case=underscore --testonly
+
 // MessageBrokerConnection ...
 type MessageBrokerConnection interface {
 	Channel() (*amqp.Channel, error)
