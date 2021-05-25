@@ -193,7 +193,55 @@ func TestClient_Close(test *testing.T) {
 		fields    fields
 		wantedErr assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				connection: func() MessageBrokerConnection {
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Close").Return(nil)
+
+					return connection
+				}(),
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.On("Close").Return(nil)
+
+					return channel
+				}(),
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "error with the channel",
+			fields: fields{
+				connection: new(MockMessageBrokerConnection),
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.On("Close").Return(iotest.ErrTimeout)
+
+					return channel
+				}(),
+			},
+			wantedErr: assert.Error,
+		},
+		{
+			name: "error with the connection",
+			fields: fields{
+				connection: func() MessageBrokerConnection {
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Close").Return(iotest.ErrTimeout)
+
+					return connection
+				}(),
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.On("Close").Return(nil)
+
+					return channel
+				}(),
+			},
+			wantedErr: assert.Error,
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
