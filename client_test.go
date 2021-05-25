@@ -2,6 +2,7 @@ package rabbitmqutils
 
 import (
 	"testing"
+	"testing/iotest"
 
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
@@ -23,7 +24,73 @@ func TestClient_ConsumeMessages(test *testing.T) {
 		wantedMessages []amqp.Delivery
 		wantedErr      assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					messagesAsSlice := []amqp.Delivery{
+						{Body: []byte("one")},
+						{Body: []byte("two")},
+					}
+					messages := make(chan amqp.Delivery, len(messagesAsSlice))
+					for _, message := range messagesAsSlice {
+						messages <- message
+					}
+					close(messages)
+
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Consume",
+							"test",          // queue name
+							"test_consumer", // consumer name
+							false,           // auto-acknowledge
+							false,           // exclusive
+							false,           // no local
+							false,           // no wait
+							amqp.Table(nil), // arguments
+						).
+						Return((<-chan amqp.Delivery)(messages), nil)
+
+					return channel
+				}(),
+			},
+			args: args{
+				queue: "test",
+			},
+			wantedMessages: []amqp.Delivery{
+				{Body: []byte("one")},
+				{Body: []byte("two")},
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "error",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Consume",
+							"test",          // queue name
+							"test_consumer", // consumer name
+							false,           // auto-acknowledge
+							false,           // exclusive
+							false,           // no local
+							false,           // no wait
+							amqp.Table(nil), // arguments
+						).
+						Return(nil, iotest.ErrTimeout)
+
+					return channel
+				}(),
+			},
+			args: args{
+				queue: "test",
+			},
+			wantedMessages: nil,
+			wantedErr:      assert.Error,
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
