@@ -5,12 +5,20 @@ type Dialer func(dsn string) (MessageBrokerConnection, error)
 
 // ClientConfig ...
 type ClientConfig struct {
+	dialer           Dialer
 	maximalQueueSize int
 	queues           []string
 }
 
 // ClientOption ...
 type ClientOption func(clientConfig *ClientConfig)
+
+// WithDialer ...
+func WithDialer(dialer Dialer) ClientOption {
+	return func(clientConfig *ClientConfig) {
+		clientConfig.dialer = dialer
+	}
+}
 
 // WithMaximalQueueSize ...
 func WithMaximalQueueSize(maximalQueueSize int) ClientOption {
