@@ -55,7 +55,12 @@ type Client struct {
 }
 
 // NewClient ...
-func NewClient(dsn string) (Client, error) {
+func NewClient(dsn string, options ...ClientOption) (Client, error) {
+	var clientOptions ClientOptions
+	for _, option := range options {
+		option(&clientOptions)
+	}
+
 	connection, err := amqp.Dial(dsn)
 	if err != nil {
 		return Client{}, errors.Wrap(err, "unable to open the connection")
@@ -66,24 +71,8 @@ func NewClient(dsn string) (Client, error) {
 		return Client{}, errors.Wrap(err, "unable to open the channel")
 	}
 
-	client := Client{connection: connection, channel: channel}
-	return client, nil
-}
-
-// NewClientWithOptions ...
-func NewClientWithOptions(dsn string, options ...ClientOption) (Client, error) {
-	var clientOptions ClientOptions
-	for _, option := range options {
-		option(&clientOptions)
-	}
-
-	client, err := NewClient(dsn)
-	if err != nil {
-		return Client{}, err
-	}
-
 	if clientOptions.maximalQueueSize != 0 {
-		if err := client.channel.Qos(
+		if err := channel.Qos(
 			clientOptions.maximalQueueSize, // prefetch count
 			0,                              // prefetch size
 			false,                          // global
@@ -93,7 +82,7 @@ func NewClientWithOptions(dsn string, options ...ClientOption) (Client, error) {
 	}
 
 	for _, queue := range clientOptions.queues {
-		if _, err := client.channel.QueueDeclare(
+		if _, err := channel.QueueDeclare(
 			queue, // queue name
 			true,  // durable
 			false, // auto-delete
@@ -105,6 +94,7 @@ func NewClientWithOptions(dsn string, options ...ClientOption) (Client, error) {
 		}
 	}
 
+	client := Client{connection: connection, channel: channel}
 	return client, nil
 }
 
