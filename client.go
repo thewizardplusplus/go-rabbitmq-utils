@@ -58,7 +58,13 @@ type Client struct {
 func NewClient(dsn string, options ...ClientOption) (Client, error) {
 	clientConfig := ClientConfig{
 		dialer: func(dsn string) (MessageBrokerConnection, error) {
-			return amqp.Dial(dsn)
+			connection, err := amqp.Dial(dsn)
+			if err != nil {
+				return nil, err
+			}
+
+			wrapper := ConnectionWrapper{Connection: connection}
+			return wrapper, nil
 		},
 	}
 	for _, option := range options {
