@@ -7,17 +7,17 @@ import (
 )
 
 func TestWithMaximalQueueSize(test *testing.T) {
-	var clientOptions ClientOptions
-	clientOption := WithMaximalQueueSize(23)
-	clientOption(&clientOptions)
+	var clientConfig ClientConfig
+	option := WithMaximalQueueSize(23)
+	option(&clientConfig)
 
-	assert.Equal(test, 23, clientOptions.maximalQueueSize)
+	assert.Equal(test, 23, clientConfig.maximalQueueSize)
 }
 
 func TestWithQueues(test *testing.T) {
-	var clientOptions ClientOptions
-	clientOption := WithQueues([]string{"one", "two"})
-	clientOption(&clientOptions)
+	var clientConfig ClientConfig
+	option := WithQueues([]string{"one", "two"})
+	option(&clientConfig)
 
-	assert.Equal(test, []string{"one", "two"}, clientOptions.queues)
+	assert.Equal(test, []string{"one", "two"}, clientConfig.queues)
 }

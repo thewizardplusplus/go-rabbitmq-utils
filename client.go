@@ -56,9 +56,9 @@ type Client struct {
 
 // NewClient ...
 func NewClient(dsn string, options ...ClientOption) (Client, error) {
-	var clientOptions ClientOptions
+	var clientConfig ClientConfig
 	for _, option := range options {
-		option(&clientOptions)
+		option(&clientConfig)
 	}
 
 	connection, err := amqp.Dial(dsn)
@@ -71,17 +71,17 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 		return Client{}, errors.Wrap(err, "unable to open the channel")
 	}
 
-	if clientOptions.maximalQueueSize != 0 {
+	if clientConfig.maximalQueueSize != 0 {
 		if err := channel.Qos(
-			clientOptions.maximalQueueSize, // prefetch count
-			0,                              // prefetch size
-			false,                          // global
+			clientConfig.maximalQueueSize, // prefetch count
+			0,                             // prefetch size
+			false,                         // global
 		); err != nil {
 			return Client{}, errors.Wrap(err, "unable to set the maximal queue size")
 		}
 	}
 
-	for _, queue := range clientOptions.queues {
+	for _, queue := range clientConfig.queues {
 		if _, err := channel.QueueDeclare(
 			queue, // queue name
 			true,  // durable

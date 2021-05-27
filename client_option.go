@@ -1,24 +1,24 @@
 package rabbitmqutils
 
-// ClientOptions ...
-type ClientOptions struct {
+// ClientConfig ...
+type ClientConfig struct {
 	maximalQueueSize int
 	queues           []string
 }
 
 // ClientOption ...
-type ClientOption func(options *ClientOptions)
+type ClientOption func(clientConfig *ClientConfig)
 
 // WithMaximalQueueSize ...
 func WithMaximalQueueSize(maximalQueueSize int) ClientOption {
-	return func(options *ClientOptions) {
-		options.maximalQueueSize = maximalQueueSize
+	return func(clientConfig *ClientConfig) {
+		clientConfig.maximalQueueSize = maximalQueueSize
 	}
 }
 
 // WithQueues ...
 func WithQueues(queues []string) ClientOption {
-	return func(options *ClientOptions) {
-		options.queues = queues
+	return func(clientConfig *ClientConfig) {
+		clientConfig.queues = queues
 	}
 }
