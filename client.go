@@ -11,7 +11,7 @@ import (
 
 // MessageBrokerConnection ...
 type MessageBrokerConnection interface {
-	Channel() (*amqp.Channel, error)
+	Channel() (MessageBrokerChannel, error)
 	Close() error
 }
 
