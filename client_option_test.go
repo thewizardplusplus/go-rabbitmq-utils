@@ -6,6 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestWithDialer(test *testing.T) {
+	var clientConfig ClientConfig
+	option := WithDialer(func(dsn string) (MessageBrokerConnection, error) {
+		panic("it should not be called")
+	})
+	option(&clientConfig)
+
+	assert.NotNil(test, clientConfig.dialer)
+}
+
 func TestWithMaximalQueueSize(test *testing.T) {
 	var clientConfig ClientConfig
 	option := WithMaximalQueueSize(23)
