@@ -1,5 +1,8 @@
 package rabbitmqutils
 
+// Dialer ...
+type Dialer func(dsn string) (MessageBrokerConnection, error)
+
 // ClientConfig ...
 type ClientConfig struct {
 	maximalQueueSize int
