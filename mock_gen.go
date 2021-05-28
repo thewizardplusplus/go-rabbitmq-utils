@@ -1,6 +1,7 @@
 package rabbitmqutils
 
 import (
+	"github.com/go-log/log"
 	"github.com/streadway/amqp"
 )
 
@@ -22,6 +23,16 @@ type DialerInterface interface {
 //
 type ContextCancellerInterface interface {
 	CancelContext()
+}
+
+//go:generate mockery --name=Logger --inpackage --case=underscore --testonly
+
+// Logger ...
+//
+// It is used only for mock generating.
+//
+type Logger interface {
+	log.Logger
 }
 
 //go:generate mockery --name=AMQPAcknowledger --inpackage --case=underscore --testonly
