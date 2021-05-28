@@ -14,6 +14,8 @@ const (
 	TwiceMessageHandling
 )
 
+//go:generate mockery --name=FailingMessageHandler --inpackage --case=underscore --testonly
+
 // FailingMessageHandler ...
 type FailingMessageHandler interface {
 	HandleMessage(message amqp.Delivery) error
