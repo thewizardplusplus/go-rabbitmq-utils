@@ -9,6 +9,39 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestNewClient(test *testing.T) {
+	type args struct {
+		dsn     string
+		dialer  DialerInterface
+		options []ClientOption
+	}
+
+	for _, data := range []struct {
+		name         string
+		args         args
+		wantedClient func(test *testing.T, client Client)
+		wantedErr    assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			options := append(data.args.options, WithDialer(data.args.dialer.Dial))
+			receivedClient, receivedErr := NewClient(data.args.dsn, options...)
+
+			mock.AssertExpectationsForObjects(test, data.args.dialer)
+			if receivedClient != (Client{}) {
+				mock.AssertExpectationsForObjects(
+					test,
+					receivedClient.connection,
+					receivedClient.channel,
+				)
+			}
+			data.wantedClient(test, receivedClient)
+			data.wantedErr(test, receivedErr)
+		})
+	}
+}
+
 func TestClient_PublishMessage(test *testing.T) {
 	type fields struct {
 		channel MessageBrokerChannel
