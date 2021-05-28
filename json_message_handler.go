@@ -8,6 +8,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
+//go:generate mockery --name=SpecificMessageHandler --inpackage --case=underscore --testonly
+
 // SpecificMessageHandler ...
 type SpecificMessageHandler interface {
 	MessageType() reflect.Type
