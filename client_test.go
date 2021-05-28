@@ -22,7 +22,207 @@ func TestNewClient(test *testing.T) {
 		wantedClient func(test *testing.T, client Client)
 		wantedErr    assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success without options",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					channel := new(MockMessageBrokerChannel)
+
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(channel, nil)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: nil,
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{client.connection, client.channel} {
+					assert.NotNil(test, field)
+				}
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "success with the setting of a maximal queue size",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Qos",
+							23,    // prefetch count
+							0,     // prefetch size
+							false, // global
+						).
+						Return(nil)
+
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(channel, nil)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: []ClientOption{WithMaximalQueueSize(23)},
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{client.connection, client.channel} {
+					assert.NotNil(test, field)
+				}
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "success with the declaring of queues",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					channel := new(MockMessageBrokerChannel)
+					for _, queue := range []string{"one", "two"} {
+						channel.
+							On(
+								"QueueDeclare",
+								queue,           // queue name
+								true,            // durable
+								false,           // auto-delete
+								false,           // exclusive
+								false,           // no wait
+								amqp.Table(nil), // arguments
+							).
+							Return(amqp.Queue{}, nil)
+					}
+
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(channel, nil)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: []ClientOption{WithQueues([]string{"one", "two"})},
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{client.connection, client.channel} {
+					assert.NotNil(test, field)
+				}
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "error with the opening of the connection",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(nil, iotest.ErrTimeout)
+
+					return dialer
+				}(),
+				options: nil,
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{client.connection, client.channel} {
+					assert.Nil(test, field)
+				}
+			},
+			wantedErr: assert.Error,
+		},
+		{
+			name: "error with the opening of the channel",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(nil, iotest.ErrTimeout)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: nil,
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{client.connection, client.channel} {
+					assert.Nil(test, field)
+				}
+			},
+			wantedErr: assert.Error,
+		},
+		{
+			name: "error with the setting of a maximal queue size",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Qos",
+							23,    // prefetch count
+							0,     // prefetch size
+							false, // global
+						).
+						Return(iotest.ErrTimeout)
+
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(channel, nil)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: []ClientOption{WithMaximalQueueSize(23)},
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{client.connection, client.channel} {
+					assert.Nil(test, field)
+				}
+			},
+			wantedErr: assert.Error,
+		},
+		{
+			name: "error with the declaring of queues",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"QueueDeclare",
+							"one",           // queue name
+							true,            // durable
+							false,           // auto-delete
+							false,           // exclusive
+							false,           // no wait
+							amqp.Table(nil), // arguments
+						).
+						Return(amqp.Queue{}, iotest.ErrTimeout)
+
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(channel, nil)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: []ClientOption{WithQueues([]string{"one", "two"})},
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{client.connection, client.channel} {
+					assert.Nil(test, field)
+				}
+			},
+			wantedErr: assert.Error,
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			options := append(data.args.options, WithDialer(data.args.dialer.Dial))
