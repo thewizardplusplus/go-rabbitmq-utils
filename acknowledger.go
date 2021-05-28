@@ -35,11 +35,11 @@ func (acknowledger Acknowledger) HandleMessage(message amqp.Delivery) {
 
 		requeue :=
 			acknowledger.MessageHandling == TwiceMessageHandling && !message.Redelivered
-		message.Reject(requeue)
+		message.Reject(requeue) // nolint: errcheck, gosec
 
 		return
 	}
 
 	acknowledger.Logger.Log("message has been handled successfully")
-	message.Ack(false /* multiple */)
+	message.Ack(false /* multiple */) // nolint: errcheck, gosec
 }

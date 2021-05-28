@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// nolint: gocyclo
 func TestNewClient(test *testing.T) {
 	type args struct {
 		dsn     string
