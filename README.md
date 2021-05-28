@@ -5,6 +5,51 @@
 [![Build Status](https://travis-ci.org/thewizardplusplus/go-rabbitmq-utils.svg?branch=master)](https://travis-ci.org/thewizardplusplus/go-rabbitmq-utils)
 [![codecov](https://codecov.io/gh/thewizardplusplus/go-rabbitmq-utils/branch/master/graph/badge.svg)](https://codecov.io/gh/thewizardplusplus/go-rabbitmq-utils)
 
+The library that provides utility entities for working with [RabbitMQ](https://www.rabbitmq.com/).
+
+## Features
+
+- client:
+  - options (will be applied on connecting):
+    - maximal queue size (optionally);
+    - queues for declaring:
+      - will survive server restarts and remain without consumers;
+  - operations:
+    - with a connection:
+      - opening;
+      - closing;
+    - with messages:
+      - message publishing:
+        - automatic marshalling of a message data to JSON;
+      - starting of message consuming:
+        - automatic generating of a consumer name;
+      - cancelling of message consuming:
+        - automatic generating of a consumer name;
+- message consumer:
+  - arguments:
+    - client;
+    - queue name;
+    - outer message handler;
+  - operations:
+    - message consuming:
+      - starting;
+      - cancelling;
+    - message handling:
+      - support of concurrent handling;
+- wrappers for an outer message handler:
+  - acknowledger:
+    - processing on success:
+      - acknowledging of the message;
+      - logging of the success fact;
+    - processing on failure:
+      - rejecting of the message:
+        - with once message handling;
+        - with twice message handling (i.e. once requeue);
+      - logging of the error;
+  - JSON message handler:
+    - automatical creating of a receiver for a message data by its specified type;
+    - unmarshalling of a message data from JSON to the created receiver.
+
 ## Installation
 
 Prepare the directory:
