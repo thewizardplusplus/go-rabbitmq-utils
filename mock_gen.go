@@ -15,6 +15,16 @@ type DialerInterface interface {
 	Dial(dsn string) (MessageBrokerConnection, error)
 }
 
+//go:generate mockery --name=IDGeneratorInterface --inpackage --case=underscore --testonly
+
+// IDGeneratorInterface ...
+//
+// It is used only for mock generating.
+//
+type IDGeneratorInterface interface {
+	GenerateID() (string, error)
+}
+
 //go:generate mockery --name=ContextCancellerInterface --inpackage --case=underscore --testonly
 
 // ContextCancellerInterface ...
