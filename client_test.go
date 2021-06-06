@@ -3,6 +3,7 @@ package rabbitmqutils
 import (
 	"testing"
 	"testing/iotest"
+	"time"
 
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
@@ -45,6 +46,7 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
 				} {
 					assert.NotNil(test, field)
 				}
@@ -81,6 +83,7 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
 				} {
 					assert.NotNil(test, field)
 				}
@@ -122,6 +125,7 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
 				} {
 					assert.NotNil(test, field)
 				}
@@ -154,6 +158,40 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
+				} {
+					assert.NotNil(test, field)
+				}
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "success with the setting of a clock",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					channel := new(MockMessageBrokerChannel)
+
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(channel, nil)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: []ClientOption{
+					WithClock(func() time.Time {
+						panic("it should not be called")
+					}),
+				},
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+					client.clock,
 				} {
 					assert.NotNil(test, field)
 				}
@@ -177,6 +215,7 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
 				} {
 					assert.Nil(test, field)
 				}
@@ -203,6 +242,7 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
 				} {
 					assert.Nil(test, field)
 				}
@@ -239,6 +279,7 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
 				} {
 					assert.Nil(test, field)
 				}
@@ -278,6 +319,7 @@ func TestNewClient(test *testing.T) {
 					client.connection,
 					client.channel,
 					client.idGenerator,
+					client.clock,
 				} {
 					assert.Nil(test, field)
 				}
