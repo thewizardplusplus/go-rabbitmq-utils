@@ -36,6 +36,7 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 							message.Acknowledger = nil
 
 							return reflect.DeepEqual(message, amqp.Delivery{
+								MessageId:   "message-id",
 								DeliveryTag: 23,
 								Body:        []byte("test"),
 							})
@@ -46,7 +47,9 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 				}(),
 				Logger: func() log.Logger {
 					logger := new(MockLogger)
-					logger.On("Log", "message has been handled successfully").Return()
+					logger.
+						On("Logf", "message %s has been handled successfully", "message-id").
+						Return()
 
 					return logger
 				}(),
@@ -59,6 +62,7 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 
 						return amqpAcknowledger
 					}(),
+					MessageId:   "message-id",
 					DeliveryTag: 23,
 					Body:        []byte("test"),
 				},
@@ -75,6 +79,7 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 							message.Acknowledger = nil
 
 							return reflect.DeepEqual(message, amqp.Delivery{
+								MessageId:   "message-id",
 								DeliveryTag: 23,
 								Body:        []byte("test"),
 							})
@@ -86,7 +91,12 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 				Logger: func() log.Logger {
 					logger := new(MockLogger)
 					logger.
-						On("Logf", "unable to handle the message: %v", iotest.ErrTimeout).
+						On(
+							"Logf",
+							"unable to handle the message %s: %v",
+							"message-id",
+							iotest.ErrTimeout,
+						).
 						Return()
 
 					return logger
@@ -100,6 +110,7 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 
 						return amqpAcknowledger
 					}(),
+					MessageId:   "message-id",
 					DeliveryTag: 23,
 					Body:        []byte("test"),
 				},
@@ -116,6 +127,7 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 							message.Acknowledger = nil
 
 							return reflect.DeepEqual(message, amqp.Delivery{
+								MessageId:   "message-id",
 								DeliveryTag: 23,
 								Body:        []byte("test"),
 							})
@@ -127,7 +139,12 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 				Logger: func() log.Logger {
 					logger := new(MockLogger)
 					logger.
-						On("Logf", "unable to handle the message: %v", iotest.ErrTimeout).
+						On(
+							"Logf",
+							"unable to handle the message %s: %v",
+							"message-id",
+							iotest.ErrTimeout,
+						).
 						Return()
 
 					return logger
@@ -141,6 +158,7 @@ func TestAcknowledger_HandleMessage(test *testing.T) {
 
 						return amqpAcknowledger
 					}(),
+					MessageId:   "message-id",
 					DeliveryTag: 23,
 					Body:        []byte("test"),
 				},
