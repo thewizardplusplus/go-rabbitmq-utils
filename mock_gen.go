@@ -1,6 +1,8 @@
 package rabbitmqutils
 
 import (
+	"time"
+
 	"github.com/go-log/log"
 	"github.com/streadway/amqp"
 )
@@ -23,6 +25,16 @@ type DialerInterface interface {
 //
 type IDGeneratorInterface interface {
 	GenerateID() (string, error)
+}
+
+//go:generate mockery --name=ClockInterface --inpackage --case=underscore --testonly
+
+// ClockInterface ...
+//
+// It is used only for mock generating.
+//
+type ClockInterface interface {
+	Time() time.Time
 }
 
 //go:generate mockery --name=ContextCancellerInterface --inpackage --case=underscore --testonly
