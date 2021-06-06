@@ -3,6 +3,7 @@ package rabbitmqutils
 import (
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
 )
@@ -50,8 +51,9 @@ type MessageBrokerChannel interface {
 
 // Client ...
 type Client struct {
-	connection MessageBrokerConnection
-	channel    MessageBrokerChannel
+	connection  MessageBrokerConnection
+	channel     MessageBrokerChannel
+	idGenerator IDGenerator
 }
 
 // NewClient ...
@@ -65,6 +67,14 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 
 			wrapper := ConnectionWrapper{Connection: connection}
 			return wrapper, nil
+		},
+		idGenerator: func() (string, error) {
+			uuid, err := uuid.NewRandom()
+			if err != nil {
+				return "", err
+			}
+
+			return uuid.String(), nil
 		},
 	}
 	for _, option := range options {
@@ -104,7 +114,11 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 		}
 	}
 
-	client := Client{connection: connection, channel: channel}
+	client := Client{
+		connection:  connection,
+		channel:     channel,
+		idGenerator: clientConfig.idGenerator,
+	}
 	return client, nil
 }
 
