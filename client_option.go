@@ -11,6 +11,7 @@ type ClientConfig struct {
 	dialer           Dialer
 	maximalQueueSize int
 	queues           []string
+	idGenerator      IDGenerator
 }
 
 // ClientOption ...
@@ -34,5 +35,12 @@ func WithMaximalQueueSize(maximalQueueSize int) ClientOption {
 func WithQueues(queues []string) ClientOption {
 	return func(clientConfig *ClientConfig) {
 		clientConfig.queues = queues
+	}
+}
+
+// WithIDGenerator ...
+func WithIDGenerator(idGenerator IDGenerator) ClientOption {
+	return func(clientConfig *ClientConfig) {
+		clientConfig.idGenerator = idGenerator
 	}
 }
