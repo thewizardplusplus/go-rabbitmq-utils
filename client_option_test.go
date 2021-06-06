@@ -31,3 +31,13 @@ func TestWithQueues(test *testing.T) {
 
 	assert.Equal(test, []string{"one", "two"}, clientConfig.queues)
 }
+
+func TestWithIDGenerator(test *testing.T) {
+	var clientConfig ClientConfig
+	option := WithIDGenerator(func() (string, error) {
+		panic("it should not be called")
+	})
+	option(&clientConfig)
+
+	assert.NotNil(test, clientConfig.idGenerator)
+}
