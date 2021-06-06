@@ -304,7 +304,8 @@ func TestNewClient(test *testing.T) {
 
 func TestClient_PublishMessage(test *testing.T) {
 	type fields struct {
-		channel MessageBrokerChannel
+		channel     MessageBrokerChannel
+		idGenerator IDGeneratorInterface
 	}
 	type args struct {
 		queue   string
@@ -334,6 +335,7 @@ func TestClient_PublishMessage(test *testing.T) {
 							false, // mandatory
 							false, // immediate
 							amqp.Publishing{
+								MessageId:   "message-id",
 								ContentType: "application/json",
 								Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
 							},
@@ -341,6 +343,12 @@ func TestClient_PublishMessage(test *testing.T) {
 						Return(nil)
 
 					return channel
+				}(),
+				idGenerator: func() IDGeneratorInterface {
+					idGenerator := new(MockIDGeneratorInterface)
+					idGenerator.On("GenerateID").Return("message-id", nil)
+
+					return idGenerator
 				}(),
 			},
 			args: args{
@@ -350,9 +358,32 @@ func TestClient_PublishMessage(test *testing.T) {
 			wantedErr: assert.NoError,
 		},
 		{
+			name: "error with message ID generating",
+			fields: fields{
+				channel: new(MockMessageBrokerChannel),
+				idGenerator: func() IDGeneratorInterface {
+					idGenerator := new(MockIDGeneratorInterface)
+					idGenerator.On("GenerateID").Return("", iotest.ErrTimeout)
+
+					return idGenerator
+				}(),
+			},
+			args: args{
+				queue:   "one",
+				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+			},
+			wantedErr: assert.Error,
+		},
+		{
 			name: "error with marshalling",
 			fields: fields{
 				channel: new(MockMessageBrokerChannel),
+				idGenerator: func() IDGeneratorInterface {
+					idGenerator := new(MockIDGeneratorInterface)
+					idGenerator.On("GenerateID").Return("message-id", nil)
+
+					return idGenerator
+				}(),
 			},
 			args: args{
 				queue:   "one",
@@ -373,6 +404,7 @@ func TestClient_PublishMessage(test *testing.T) {
 							false, // mandatory
 							false, // immediate
 							amqp.Publishing{
+								MessageId:   "message-id",
 								ContentType: "application/json",
 								Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
 							},
@@ -380,6 +412,12 @@ func TestClient_PublishMessage(test *testing.T) {
 						Return(iotest.ErrTimeout)
 
 					return channel
+				}(),
+				idGenerator: func() IDGeneratorInterface {
+					idGenerator := new(MockIDGeneratorInterface)
+					idGenerator.On("GenerateID").Return("message-id", nil)
+
+					return idGenerator
 				}(),
 			},
 			args: args{
@@ -391,11 +429,16 @@ func TestClient_PublishMessage(test *testing.T) {
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
-				channel: data.fields.channel,
+				channel:     data.fields.channel,
+				idGenerator: data.fields.idGenerator.GenerateID,
 			}
 			receivedErr := client.PublishMessage(data.args.queue, data.args.message)
 
-			mock.AssertExpectationsForObjects(test, data.fields.channel)
+			mock.AssertExpectationsForObjects(
+				test,
+				data.fields.channel,
+				data.fields.idGenerator,
+			)
 			data.wantedErr(test, receivedErr)
 		})
 	}
