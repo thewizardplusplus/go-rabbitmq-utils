@@ -348,6 +348,7 @@ func TestClient_PublishMessage(test *testing.T) {
 	type fields struct {
 		channel     MessageBrokerChannel
 		idGenerator IDGeneratorInterface
+		clock       ClockInterface
 	}
 	type args struct {
 		queue   string
@@ -378,6 +379,7 @@ func TestClient_PublishMessage(test *testing.T) {
 							false, // immediate
 							amqp.Publishing{
 								MessageId:   "message-id",
+								Timestamp:   time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC),
 								ContentType: "application/json",
 								Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
 							},
@@ -391,6 +393,14 @@ func TestClient_PublishMessage(test *testing.T) {
 					idGenerator.On("GenerateID").Return("message-id", nil)
 
 					return idGenerator
+				}(),
+				clock: func() ClockInterface {
+					clock := new(MockClockInterface)
+					clock.
+						On("Time").
+						Return(time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC))
+
+					return clock
 				}(),
 			},
 			args: args{
@@ -409,6 +419,7 @@ func TestClient_PublishMessage(test *testing.T) {
 
 					return idGenerator
 				}(),
+				clock: new(MockClockInterface),
 			},
 			args: args{
 				queue:   "one",
@@ -426,6 +437,7 @@ func TestClient_PublishMessage(test *testing.T) {
 
 					return idGenerator
 				}(),
+				clock: new(MockClockInterface),
 			},
 			args: args{
 				queue:   "one",
@@ -447,6 +459,7 @@ func TestClient_PublishMessage(test *testing.T) {
 							false, // immediate
 							amqp.Publishing{
 								MessageId:   "message-id",
+								Timestamp:   time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC),
 								ContentType: "application/json",
 								Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
 							},
@@ -461,6 +474,14 @@ func TestClient_PublishMessage(test *testing.T) {
 
 					return idGenerator
 				}(),
+				clock: func() ClockInterface {
+					clock := new(MockClockInterface)
+					clock.
+						On("Time").
+						Return(time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC))
+
+					return clock
+				}(),
 			},
 			args: args{
 				queue:   "one",
@@ -473,6 +494,7 @@ func TestClient_PublishMessage(test *testing.T) {
 			client := Client{
 				channel:     data.fields.channel,
 				idGenerator: data.fields.idGenerator.GenerateID,
+				clock:       data.fields.clock.Time,
 			}
 			receivedErr := client.PublishMessage(data.args.queue, data.args.message)
 
@@ -480,6 +502,7 @@ func TestClient_PublishMessage(test *testing.T) {
 				test,
 				data.fields.channel,
 				data.fields.idGenerator,
+				data.fields.clock,
 			)
 			data.wantedErr(test, receivedErr)
 		})
