@@ -5,6 +5,7 @@ import (
 	"testing/iotest"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -50,6 +51,8 @@ func TestNewClient(test *testing.T) {
 				} {
 					assert.NotNil(test, field)
 				}
+
+				assert.Equal(test, mapset.NewSet(), client.queues)
 			},
 			wantedErr: assert.NoError,
 		},
@@ -87,6 +90,8 @@ func TestNewClient(test *testing.T) {
 				} {
 					assert.NotNil(test, field)
 				}
+
+				assert.Equal(test, mapset.NewSet(), client.queues)
 			},
 			wantedErr: assert.NoError,
 		},
@@ -129,6 +134,8 @@ func TestNewClient(test *testing.T) {
 				} {
 					assert.NotNil(test, field)
 				}
+
+				assert.Equal(test, mapset.NewSet("one", "two"), client.queues)
 			},
 			wantedErr: assert.NoError,
 		},
@@ -162,6 +169,8 @@ func TestNewClient(test *testing.T) {
 				} {
 					assert.NotNil(test, field)
 				}
+
+				assert.Equal(test, mapset.NewSet(), client.queues)
 			},
 			wantedErr: assert.NoError,
 		},
@@ -195,6 +204,8 @@ func TestNewClient(test *testing.T) {
 				} {
 					assert.NotNil(test, field)
 				}
+
+				assert.Equal(test, mapset.NewSet(), client.queues)
 			},
 			wantedErr: assert.NoError,
 		},
@@ -214,6 +225,7 @@ func TestNewClient(test *testing.T) {
 				for _, field := range []interface{}{
 					client.connection,
 					client.channel,
+					client.queues,
 					client.idGenerator,
 					client.clock,
 				} {
@@ -241,6 +253,7 @@ func TestNewClient(test *testing.T) {
 				for _, field := range []interface{}{
 					client.connection,
 					client.channel,
+					client.queues,
 					client.idGenerator,
 					client.clock,
 				} {
@@ -278,6 +291,7 @@ func TestNewClient(test *testing.T) {
 				for _, field := range []interface{}{
 					client.connection,
 					client.channel,
+					client.queues,
 					client.idGenerator,
 					client.clock,
 				} {
@@ -321,6 +335,7 @@ func TestNewClient(test *testing.T) {
 				for _, field := range []interface{}{
 					client.connection,
 					client.channel,
+					client.queues,
 					client.idGenerator,
 					client.clock,
 				} {

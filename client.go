@@ -55,6 +55,7 @@ type MessageBrokerChannel interface {
 type Client struct {
 	connection  MessageBrokerConnection
 	channel     MessageBrokerChannel
+	queues      mapset.Set
 	idGenerator IDGenerator
 	clock       Clock
 }
@@ -129,6 +130,7 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 	client := Client{
 		connection:  connection,
 		channel:     channel,
+		queues:      clientConfig.queues,
 		idGenerator: clientConfig.idGenerator,
 		clock:       clientConfig.clock,
 	}
