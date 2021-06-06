@@ -295,7 +295,10 @@ func TestNewClient(test *testing.T) {
 					channel.
 						On(
 							"QueueDeclare",
-							"one",           // queue name
+							// queue name
+							mock.MatchedBy(func(queue string) bool {
+								return queue == "one" || queue == "two"
+							}),
 							true,            // durable
 							false,           // auto-delete
 							false,           // exclusive

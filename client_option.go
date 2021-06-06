@@ -2,6 +2,8 @@ package rabbitmqutils
 
 import (
 	"time"
+
+	mapset "github.com/deckarep/golang-set"
 )
 
 // Dialer ...
@@ -17,7 +19,7 @@ type Clock func() time.Time
 type ClientConfig struct {
 	dialer           Dialer
 	maximalQueueSize int
-	queues           []string
+	queues           mapset.Set
 	idGenerator      IDGenerator
 	clock            Clock
 }
@@ -42,7 +44,10 @@ func WithMaximalQueueSize(maximalQueueSize int) ClientOption {
 // WithQueues ...
 func WithQueues(queues []string) ClientOption {
 	return func(clientConfig *ClientConfig) {
-		clientConfig.queues = queues
+		clientConfig.queues = mapset.NewSet()
+		for _, queue := range queues {
+			clientConfig.queues.Add(queue)
+		}
 	}
 }
 

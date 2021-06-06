@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
@@ -70,6 +71,7 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 			wrapper := ConnectionWrapper{Connection: connection}
 			return wrapper, nil
 		},
+		queues: mapset.NewSet(),
 		idGenerator: func() (string, error) {
 			uuid, err := uuid.NewRandom()
 			if err != nil {
@@ -104,17 +106,24 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 		}
 	}
 
-	for _, queue := range clientConfig.queues {
+	var queueErr error
+	clientConfig.queues.Each(func(queue interface{}) bool {
 		if _, err := channel.QueueDeclare(
-			queue, // queue name
-			true,  // durable
-			false, // auto-delete
-			false, // exclusive
-			false, // no wait
-			nil,   // arguments
+			queue.(string), // queue name
+			true,           // durable
+			false,          // auto-delete
+			false,          // exclusive
+			false,          // no wait
+			nil,            // arguments
 		); err != nil {
-			return Client{}, errors.Wrapf(err, "unable to declare queue %q", queue)
+			queueErr = errors.Wrapf(err, "unable to declare queue %q", queue)
+			return true
 		}
+
+		return false
+	})
+	if queueErr != nil {
+		return Client{}, queueErr
 	}
 
 	client := Client{

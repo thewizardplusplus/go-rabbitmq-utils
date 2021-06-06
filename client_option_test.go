@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	mapset "github.com/deckarep/golang-set"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +31,7 @@ func TestWithQueues(test *testing.T) {
 	option := WithQueues([]string{"one", "two"})
 	option(&clientConfig)
 
-	assert.Equal(test, []string{"one", "two"}, clientConfig.queues)
+	assert.Equal(test, mapset.NewSet("one", "two"), clientConfig.queues)
 }
 
 func TestWithIDGenerator(test *testing.T) {
