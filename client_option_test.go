@@ -2,6 +2,7 @@ package rabbitmqutils
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -40,4 +41,14 @@ func TestWithIDGenerator(test *testing.T) {
 	option(&clientConfig)
 
 	assert.NotNil(test, clientConfig.idGenerator)
+}
+
+func TestWithClock(test *testing.T) {
+	var clientConfig ClientConfig
+	option := WithClock(func() time.Time {
+		panic("it should not be called")
+	})
+	option(&clientConfig)
+
+	assert.NotNil(test, clientConfig.clock)
 }
