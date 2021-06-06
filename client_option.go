@@ -3,6 +3,9 @@ package rabbitmqutils
 // Dialer ...
 type Dialer func(dsn string) (MessageBrokerConnection, error)
 
+// IDGenerator ...
+type IDGenerator func() (string, error)
+
 // ClientConfig ...
 type ClientConfig struct {
 	dialer           Dialer
