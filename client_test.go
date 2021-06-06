@@ -41,7 +41,11 @@ func TestNewClient(test *testing.T) {
 				options: nil,
 			},
 			wantedClient: func(test *testing.T, client Client) {
-				for _, field := range []interface{}{client.connection, client.channel} {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
 					assert.NotNil(test, field)
 				}
 			},
@@ -73,7 +77,11 @@ func TestNewClient(test *testing.T) {
 				options: []ClientOption{WithMaximalQueueSize(23)},
 			},
 			wantedClient: func(test *testing.T, client Client) {
-				for _, field := range []interface{}{client.connection, client.channel} {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
 					assert.NotNil(test, field)
 				}
 			},
@@ -110,7 +118,43 @@ func TestNewClient(test *testing.T) {
 				options: []ClientOption{WithQueues([]string{"one", "two"})},
 			},
 			wantedClient: func(test *testing.T, client Client) {
-				for _, field := range []interface{}{client.connection, client.channel} {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
+					assert.NotNil(test, field)
+				}
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "success with the setting of an ID generator",
+			args: args{
+				dsn: "dsn",
+				dialer: func() DialerInterface {
+					channel := new(MockMessageBrokerChannel)
+
+					connection := new(MockMessageBrokerConnection)
+					connection.On("Channel").Return(channel, nil)
+
+					dialer := new(MockDialerInterface)
+					dialer.On("Dial", "dsn").Return(connection, nil)
+
+					return dialer
+				}(),
+				options: []ClientOption{
+					WithIDGenerator(func() (string, error) {
+						panic("it should not be called")
+					}),
+				},
+			},
+			wantedClient: func(test *testing.T, client Client) {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
 					assert.NotNil(test, field)
 				}
 			},
@@ -129,7 +173,11 @@ func TestNewClient(test *testing.T) {
 				options: nil,
 			},
 			wantedClient: func(test *testing.T, client Client) {
-				for _, field := range []interface{}{client.connection, client.channel} {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
 					assert.Nil(test, field)
 				}
 			},
@@ -151,7 +199,11 @@ func TestNewClient(test *testing.T) {
 				options: nil,
 			},
 			wantedClient: func(test *testing.T, client Client) {
-				for _, field := range []interface{}{client.connection, client.channel} {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
 					assert.Nil(test, field)
 				}
 			},
@@ -183,7 +235,11 @@ func TestNewClient(test *testing.T) {
 				options: []ClientOption{WithMaximalQueueSize(23)},
 			},
 			wantedClient: func(test *testing.T, client Client) {
-				for _, field := range []interface{}{client.connection, client.channel} {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
 					assert.Nil(test, field)
 				}
 			},
@@ -218,7 +274,11 @@ func TestNewClient(test *testing.T) {
 				options: []ClientOption{WithQueues([]string{"one", "two"})},
 			},
 			wantedClient: func(test *testing.T, client Client) {
-				for _, field := range []interface{}{client.connection, client.channel} {
+				for _, field := range []interface{}{
+					client.connection,
+					client.channel,
+					client.idGenerator,
+				} {
 					assert.Nil(test, field)
 				}
 			},
@@ -230,12 +290,11 @@ func TestNewClient(test *testing.T) {
 			receivedClient, receivedErr := NewClient(data.args.dsn, options...)
 
 			mock.AssertExpectationsForObjects(test, data.args.dialer)
-			if receivedClient != (Client{}) {
-				mock.AssertExpectationsForObjects(
-					test,
-					receivedClient.connection,
-					receivedClient.channel,
-				)
+			if receivedClient.connection != nil {
+				mock.AssertExpectationsForObjects(test, receivedClient.connection)
+			}
+			if receivedClient.channel != nil {
+				mock.AssertExpectationsForObjects(test, receivedClient.channel)
 			}
 			data.wantedClient(test, receivedClient)
 			data.wantedErr(test, receivedErr)
