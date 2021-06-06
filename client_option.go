@@ -1,10 +1,17 @@
 package rabbitmqutils
 
+import (
+	"time"
+)
+
 // Dialer ...
 type Dialer func(dsn string) (MessageBrokerConnection, error)
 
 // IDGenerator ...
 type IDGenerator func() (string, error)
+
+// Clock ...
+type Clock func() time.Time
 
 // ClientConfig ...
 type ClientConfig struct {
