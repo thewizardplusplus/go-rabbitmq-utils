@@ -124,6 +124,11 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 
 // PublishMessage ...
 func (client Client) PublishMessage(queue string, message interface{}) error {
+	messageID, err := client.idGenerator()
+	if err != nil {
+		return errors.Wrap(err, "unable to generate the message ID")
+	}
+
 	messageAsJSON, err := json.Marshal(message)
 	if err != nil {
 		return errors.Wrap(err, "unable to marshal the message")
@@ -134,7 +139,11 @@ func (client Client) PublishMessage(queue string, message interface{}) error {
 		queue, // queue name
 		false, // mandatory
 		false, // immediate
-		amqp.Publishing{ContentType: "application/json", Body: messageAsJSON},
+		amqp.Publishing{
+			MessageId:   messageID,
+			ContentType: "application/json",
+			Body:        messageAsJSON,
+		},
 	); err != nil {
 		return errors.Wrap(err, "unable to publish the message")
 	}
