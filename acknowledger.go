@@ -31,7 +31,8 @@ type Acknowledger struct {
 // HandleMessage ...
 func (acknowledger Acknowledger) HandleMessage(message amqp.Delivery) {
 	if err := acknowledger.MessageHandler.HandleMessage(message); err != nil {
-		acknowledger.Logger.Logf("unable to handle the message: %v", err)
+		acknowledger.Logger.
+			Logf("unable to handle the message %s: %v", message.MessageId, err)
 
 		requeue :=
 			acknowledger.MessageHandling == TwiceMessageHandling && !message.Redelivered
@@ -40,6 +41,7 @@ func (acknowledger Acknowledger) HandleMessage(message amqp.Delivery) {
 		return
 	}
 
-	acknowledger.Logger.Log("message has been handled successfully")
+	acknowledger.Logger.
+		Logf("message %s has been handled successfully", message.MessageId)
 	message.Ack(false /* multiple */) // nolint: errcheck, gosec
 }
