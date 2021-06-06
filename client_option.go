@@ -19,6 +19,7 @@ type ClientConfig struct {
 	maximalQueueSize int
 	queues           []string
 	idGenerator      IDGenerator
+	clock            Clock
 }
 
 // ClientOption ...
@@ -49,5 +50,12 @@ func WithQueues(queues []string) ClientOption {
 func WithIDGenerator(idGenerator IDGenerator) ClientOption {
 	return func(clientConfig *ClientConfig) {
 		clientConfig.idGenerator = idGenerator
+	}
+}
+
+// WithClock ...
+func WithClock(clock Clock) ClientOption {
+	return func(clientConfig *ClientConfig) {
+		clientConfig.clock = clock
 	}
 }
