@@ -2,6 +2,7 @@ package rabbitmqutils
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -54,6 +55,7 @@ type Client struct {
 	connection  MessageBrokerConnection
 	channel     MessageBrokerChannel
 	idGenerator IDGenerator
+	clock       Clock
 }
 
 // NewClient ...
@@ -76,6 +78,7 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 
 			return uuid.String(), nil
 		},
+		clock: time.Now,
 	}
 	for _, option := range options {
 		option(&clientConfig)
@@ -118,6 +121,7 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 		connection:  connection,
 		channel:     channel,
 		idGenerator: clientConfig.idGenerator,
+		clock:       clientConfig.clock,
 	}
 	return client, nil
 }
