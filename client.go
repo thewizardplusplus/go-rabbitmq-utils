@@ -138,6 +138,7 @@ func (client Client) PublishMessage(queue string, message interface{}) error {
 		return errors.Wrap(err, "unable to marshal the message")
 	}
 
+	messageTimestamp := client.clock()
 	if err := client.channel.Publish(
 		"",    // exchange
 		queue, // queue name
@@ -145,6 +146,7 @@ func (client Client) PublishMessage(queue string, message interface{}) error {
 		false, // immediate
 		amqp.Publishing{
 			MessageId:   messageID,
+			Timestamp:   messageTimestamp,
 			ContentType: "application/json",
 			Body:        messageAsJSON,
 		},
