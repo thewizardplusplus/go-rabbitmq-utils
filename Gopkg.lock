@@ -69,6 +69,14 @@
   revision = "e7afc7fbc51079733e9468cdfd1efcd7d196cd1d"
 
 [[projects]]
+  digest = "1:dfa0a7a6b64b2ac99259c4e79cc403470a4fa359c41029e0b8be4f419b0a0e5b"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bfb86fa49a73e4194d93bea18d7acfe3694438ce"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:c0d19ab64b32ce9fe5cf4ddceba78d5bc9807f0016db6b1183599da3dcc24d10"
   name = "github.com/hashicorp/hcl"
   packages = [
@@ -400,6 +408,7 @@
     "github.com/alecthomas/gometalinter",
     "github.com/cweill/gotests/gotests",
     "github.com/go-log/log",
+    "github.com/google/uuid",
     "github.com/pkg/errors",
     "github.com/streadway/amqp",
     "github.com/stretchr/testify/assert",
