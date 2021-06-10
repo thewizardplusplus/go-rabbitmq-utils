@@ -199,10 +199,19 @@ func (client Client) ConsumeMessages(queue string) (
 
 // CancelConsuming ...
 func (client Client) CancelConsuming(queue string) error {
-	return client.channel.Cancel(
+	if !client.queues.Contains(queue) {
+		return errors.New("unknown queue")
+	}
+
+	err := client.channel.Cancel(
 		makeConsumerName(queue), // consumer name
 		false,                   // no wait
 	)
+	if err != nil {
+		return errors.Wrap(err, "unable to cancel message consuming")
+	}
+
+	return nil
 }
 
 // Close ...
