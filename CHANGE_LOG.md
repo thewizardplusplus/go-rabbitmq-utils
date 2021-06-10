@@ -1,5 +1,26 @@
 # Change Log
 
+## [v1.1](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1) (2021-06-10)
+
+Checking of the queue name used in the [RabbitMQ](https://www.rabbitmq.com/) client operations based on the declared queues and extending of auxiliary message fields with a message ID and message timestamp.
+
+- client:
+  - options (will be applied on connecting):
+    - message ID generator for them automatic generating;
+  - operations:
+    - with messages:
+      - message publishing:
+        - check the specified queue name based on the declared queues;
+        - setting of auxiliary message fields:
+          - setting of a message ID:
+            - receiving of a custom message ID (optionally);
+            - automatic generating of a message ID (optionally);
+          - setting of a message timestamp;
+      - starting of message consuming:
+        - check the specified queue name based on the declared queues;
+      - cancelling of message consuming:
+        - check the specified queue name based on the declared queues.
+
 ## [v1.0](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.0) (2021-05-28)
 
 Major version. Implementing of the [RabbitMQ](https://www.rabbitmq.com/) client and utilities for message consuming.
