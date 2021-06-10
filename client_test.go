@@ -365,6 +365,7 @@ func TestNewClient(test *testing.T) {
 func TestClient_PublishMessage(test *testing.T) {
 	type fields struct {
 		channel     MessageBrokerChannel
+		queues      mapset.Set
 		idGenerator IDGeneratorInterface
 		clock       ClockInterface
 	}
@@ -406,6 +407,7 @@ func TestClient_PublishMessage(test *testing.T) {
 
 					return channel
 				}(),
+				queues: mapset.NewSet("one"),
 				idGenerator: func() IDGeneratorInterface {
 					idGenerator := new(MockIDGeneratorInterface)
 					idGenerator.On("GenerateID").Return("message-id", nil)
@@ -428,9 +430,24 @@ func TestClient_PublishMessage(test *testing.T) {
 			wantedErr: assert.NoError,
 		},
 		{
+			name: "error with an unknown queue",
+			fields: fields{
+				channel:     new(MockMessageBrokerChannel),
+				queues:      mapset.NewSet("one"),
+				idGenerator: new(MockIDGeneratorInterface),
+				clock:       new(MockClockInterface),
+			},
+			args: args{
+				queue:   "unknown",
+				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+			},
+			wantedErr: assert.Error,
+		},
+		{
 			name: "error with message ID generating",
 			fields: fields{
 				channel: new(MockMessageBrokerChannel),
+				queues:  mapset.NewSet("one"),
 				idGenerator: func() IDGeneratorInterface {
 					idGenerator := new(MockIDGeneratorInterface)
 					idGenerator.On("GenerateID").Return("", iotest.ErrTimeout)
@@ -449,6 +466,7 @@ func TestClient_PublishMessage(test *testing.T) {
 			name: "error with marshalling",
 			fields: fields{
 				channel: new(MockMessageBrokerChannel),
+				queues:  mapset.NewSet("one"),
 				idGenerator: func() IDGeneratorInterface {
 					idGenerator := new(MockIDGeneratorInterface)
 					idGenerator.On("GenerateID").Return("message-id", nil)
@@ -486,6 +504,7 @@ func TestClient_PublishMessage(test *testing.T) {
 
 					return channel
 				}(),
+				queues: mapset.NewSet("one"),
 				idGenerator: func() IDGeneratorInterface {
 					idGenerator := new(MockIDGeneratorInterface)
 					idGenerator.On("GenerateID").Return("message-id", nil)
@@ -511,6 +530,7 @@ func TestClient_PublishMessage(test *testing.T) {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
 				channel:     data.fields.channel,
+				queues:      data.fields.queues,
 				idGenerator: data.fields.idGenerator.GenerateID,
 				clock:       data.fields.clock.Time,
 			}

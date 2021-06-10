@@ -139,6 +139,10 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 
 // PublishMessage ...
 func (client Client) PublishMessage(queue string, message interface{}) error {
+	if !client.queues.Contains(queue) {
+		return errors.New("unknown queue")
+	}
+
 	messageID, err := client.idGenerator()
 	if err != nil {
 		return errors.Wrap(err, "unable to generate the message ID")
