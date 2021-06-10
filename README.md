@@ -14,16 +14,25 @@ The library that provides utility entities for working with [RabbitMQ](https://w
     - maximal queue size (optionally);
     - queues for declaring:
       - will survive server restarts and remain without consumers;
+    - message ID generator for them automatic generating;
   - operations:
     - with a connection:
       - opening;
       - closing;
     - with messages:
       - message publishing:
+        - check the specified queue name based on the declared queues;
         - automatic marshalling of a message data to JSON;
+        - setting of auxiliary message fields:
+          - setting of a message ID:
+            - receiving of a custom message ID (optionally);
+            - automatic generating of a message ID (optionally);
+          - setting of a message timestamp;
       - starting of message consuming:
+        - check the specified queue name based on the declared queues;
         - automatic generating of a consumer name;
       - cancelling of message consuming:
+        - check the specified queue name based on the declared queues;
         - automatic generating of a consumer name;
 - message consumer:
   - arguments:
