@@ -485,7 +485,13 @@ func TestClient_PublishMessage(test *testing.T) {
 				messageID:   "",
 				messageData: testMessage{FieldOne: 23, FieldTwo: "two"},
 			},
-			wantedErr: assert.Error,
+			wantedErr: func(
+				test assert.TestingT,
+				err error,
+				msgAndArgs ...interface{},
+			) bool {
+				return assert.Equal(test, errUnknownQueue, err, msgAndArgs...)
+			},
 		},
 		{
 			name: "error with message ID generating",
@@ -665,7 +671,13 @@ func TestClient_ConsumeMessages(test *testing.T) {
 				queue: "unknown",
 			},
 			wantedMessages: nil,
-			wantedErr:      assert.Error,
+			wantedErr: func(
+				test assert.TestingT,
+				err error,
+				msgAndArgs ...interface{},
+			) bool {
+				return assert.Equal(test, errUnknownQueue, err, msgAndArgs...)
+			},
 		},
 		{
 			name: "error with starting of message consuming",
@@ -764,7 +776,13 @@ func TestClient_CancelConsuming(test *testing.T) {
 			args: args{
 				queue: "unknown",
 			},
-			wantedErr: assert.Error,
+			wantedErr: func(
+				test assert.TestingT,
+				err error,
+				msgAndArgs ...interface{},
+			) bool {
+				return assert.Equal(test, errUnknownQueue, err, msgAndArgs...)
+			},
 		},
 		{
 			name: "error with cancelling of message consuming",

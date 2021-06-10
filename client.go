@@ -10,6 +10,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
+var errUnknownQueue = errors.New("unknown queue")
+
 //go:generate mockery --name=MessageBrokerConnection --inpackage --case=underscore --testonly
 
 // MessageBrokerConnection ...
@@ -144,7 +146,7 @@ func (client Client) PublishMessage(
 	messageData interface{},
 ) error {
 	if !client.queues.Contains(queue) {
-		return errors.New("unknown queue")
+		return errUnknownQueue
 	}
 
 	if messageID == "" {
@@ -185,7 +187,7 @@ func (client Client) ConsumeMessages(queue string) (
 	error,
 ) {
 	if !client.queues.Contains(queue) {
-		return nil, errors.New("unknown queue")
+		return nil, errUnknownQueue
 	}
 
 	messages, err := client.channel.Consume(
@@ -207,7 +209,7 @@ func (client Client) ConsumeMessages(queue string) (
 // CancelConsuming ...
 func (client Client) CancelConsuming(queue string) error {
 	if !client.queues.Contains(queue) {
-		return errors.New("unknown queue")
+		return errUnknownQueue
 	}
 
 	err := client.channel.Cancel(
