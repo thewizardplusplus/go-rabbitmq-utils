@@ -177,7 +177,11 @@ func (client Client) ConsumeMessages(queue string) (
 	<-chan amqp.Delivery,
 	error,
 ) {
-	return client.channel.Consume(
+	if !client.queues.Contains(queue) {
+		return nil, errors.New("unknown queue")
+	}
+
+	messages, err := client.channel.Consume(
 		queue,                   // queue name
 		makeConsumerName(queue), // consumer name
 		false,                   // auto-acknowledge
@@ -186,6 +190,11 @@ func (client Client) ConsumeMessages(queue string) (
 		false,                   // no wait
 		nil,                     // arguments
 	)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to start message consuming")
+	}
+
+	return messages, nil
 }
 
 // CancelConsuming ...

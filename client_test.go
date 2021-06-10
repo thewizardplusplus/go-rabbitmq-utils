@@ -550,6 +550,7 @@ func TestClient_PublishMessage(test *testing.T) {
 func TestClient_ConsumeMessages(test *testing.T) {
 	type fields struct {
 		channel MessageBrokerChannel
+		queues  mapset.Set
 	}
 	type args struct {
 		queue string
@@ -592,6 +593,7 @@ func TestClient_ConsumeMessages(test *testing.T) {
 
 					return channel
 				}(),
+				queues: mapset.NewSet("test"),
 			},
 			args: args{
 				queue: "test",
@@ -603,7 +605,19 @@ func TestClient_ConsumeMessages(test *testing.T) {
 			wantedErr: assert.NoError,
 		},
 		{
-			name: "error",
+			name: "error with an unknown queue",
+			fields: fields{
+				channel: new(MockMessageBrokerChannel),
+				queues:  mapset.NewSet("test"),
+			},
+			args: args{
+				queue: "unknown",
+			},
+			wantedMessages: nil,
+			wantedErr:      assert.Error,
+		},
+		{
+			name: "error with starting of message consuming",
 			fields: fields{
 				channel: func() MessageBrokerChannel {
 					channel := new(MockMessageBrokerChannel)
@@ -622,6 +636,7 @@ func TestClient_ConsumeMessages(test *testing.T) {
 
 					return channel
 				}(),
+				queues: mapset.NewSet("test"),
 			},
 			args: args{
 				queue: "test",
@@ -633,6 +648,7 @@ func TestClient_ConsumeMessages(test *testing.T) {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
 				channel: data.fields.channel,
+				queues:  data.fields.queues,
 			}
 			receivedMessagesChannel, receivedErr :=
 				client.ConsumeMessages(data.args.queue)
