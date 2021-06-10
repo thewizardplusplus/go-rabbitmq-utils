@@ -138,17 +138,24 @@ func NewClient(dsn string, options ...ClientOption) (Client, error) {
 }
 
 // PublishMessage ...
-func (client Client) PublishMessage(queue string, message interface{}) error {
+func (client Client) PublishMessage(
+	queue string,
+	messageID string,
+	messageData interface{},
+) error {
 	if !client.queues.Contains(queue) {
 		return errors.New("unknown queue")
 	}
 
-	messageID, err := client.idGenerator()
-	if err != nil {
-		return errors.Wrap(err, "unable to generate the message ID")
+	if messageID == "" {
+		var err error
+		messageID, err = client.idGenerator()
+		if err != nil {
+			return errors.Wrap(err, "unable to generate the message ID")
+		}
 	}
 
-	messageAsJSON, err := json.Marshal(message)
+	messageDataAsJSON, err := json.Marshal(messageData)
 	if err != nil {
 		return errors.Wrap(err, "unable to marshal the message")
 	}
@@ -163,7 +170,7 @@ func (client Client) PublishMessage(queue string, message interface{}) error {
 			MessageId:   messageID,
 			Timestamp:   messageTimestamp,
 			ContentType: "application/json",
-			Body:        messageAsJSON,
+			Body:        messageDataAsJSON,
 		},
 	); err != nil {
 		return errors.Wrap(err, "unable to publish the message")

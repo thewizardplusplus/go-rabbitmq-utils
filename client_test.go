@@ -370,8 +370,9 @@ func TestClient_PublishMessage(test *testing.T) {
 		clock       ClockInterface
 	}
 	type args struct {
-		queue   string
-		message interface{}
+		queue       string
+		messageID   string
+		messageData interface{}
 	}
 	type testMessage struct {
 		FieldOne int
@@ -385,7 +386,7 @@ func TestClient_PublishMessage(test *testing.T) {
 		wantedErr assert.ErrorAssertionFunc
 	}{
 		{
-			name: "success",
+			name: "success without message ID generating",
 			fields: fields{
 				channel: func() MessageBrokerChannel {
 					channel := new(MockMessageBrokerChannel)
@@ -424,8 +425,50 @@ func TestClient_PublishMessage(test *testing.T) {
 				}(),
 			},
 			args: args{
-				queue:   "one",
-				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+				queue:       "one",
+				messageID:   "",
+				messageData: testMessage{FieldOne: 23, FieldTwo: "two"},
+			},
+			wantedErr: assert.NoError,
+		},
+		{
+			name: "success with message ID generating",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Publish",
+							"",    // exchange
+							"one", // queue name
+							false, // mandatory
+							false, // immediate
+							amqp.Publishing{
+								MessageId:   "message-id",
+								Timestamp:   time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC),
+								ContentType: "application/json",
+								Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
+							},
+						).
+						Return(nil)
+
+					return channel
+				}(),
+				queues:      mapset.NewSet("one"),
+				idGenerator: new(MockIDGeneratorInterface),
+				clock: func() ClockInterface {
+					clock := new(MockClockInterface)
+					clock.
+						On("Time").
+						Return(time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC))
+
+					return clock
+				}(),
+			},
+			args: args{
+				queue:       "one",
+				messageID:   "message-id",
+				messageData: testMessage{FieldOne: 23, FieldTwo: "two"},
 			},
 			wantedErr: assert.NoError,
 		},
@@ -438,8 +481,9 @@ func TestClient_PublishMessage(test *testing.T) {
 				clock:       new(MockClockInterface),
 			},
 			args: args{
-				queue:   "unknown",
-				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+				queue:       "unknown",
+				messageID:   "",
+				messageData: testMessage{FieldOne: 23, FieldTwo: "two"},
 			},
 			wantedErr: assert.Error,
 		},
@@ -457,8 +501,9 @@ func TestClient_PublishMessage(test *testing.T) {
 				clock: new(MockClockInterface),
 			},
 			args: args{
-				queue:   "one",
-				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+				queue:       "one",
+				messageID:   "",
+				messageData: testMessage{FieldOne: 23, FieldTwo: "two"},
 			},
 			wantedErr: assert.Error,
 		},
@@ -476,8 +521,9 @@ func TestClient_PublishMessage(test *testing.T) {
 				clock: new(MockClockInterface),
 			},
 			args: args{
-				queue:   "one",
-				message: func() {},
+				queue:       "one",
+				messageID:   "",
+				messageData: func() {},
 			},
 			wantedErr: assert.Error,
 		},
@@ -521,8 +567,9 @@ func TestClient_PublishMessage(test *testing.T) {
 				}(),
 			},
 			args: args{
-				queue:   "one",
-				message: testMessage{FieldOne: 23, FieldTwo: "two"},
+				queue:       "one",
+				messageID:   "",
+				messageData: testMessage{FieldOne: 23, FieldTwo: "two"},
 			},
 			wantedErr: assert.Error,
 		},
@@ -534,7 +581,11 @@ func TestClient_PublishMessage(test *testing.T) {
 				idGenerator: data.fields.idGenerator.GenerateID,
 				clock:       data.fields.clock.Time,
 			}
-			receivedErr := client.PublishMessage(data.args.queue, data.args.message)
+			receivedErr := client.PublishMessage(
+				data.args.queue,
+				data.args.messageID,
+				data.args.messageData,
+			)
 
 			mock.AssertExpectationsForObjects(
 				test,
