@@ -4,6 +4,8 @@ package rabbitmqutils
 
 import (
 	"os"
+	"runtime"
+	"sync"
 	"testing"
 	"time"
 
@@ -107,6 +109,78 @@ func TestClient_PublishMessage_integration(test *testing.T) {
 			// check the results
 			mock.AssertExpectationsForObjects(test, data.fields.clock)
 			assert.Equal(test, data.wantedMessage, receivedMessage)
+		})
+	}
+}
+
+func TestClient_ConsumeMessages_integration(test *testing.T) {
+	type fields struct {
+		clock          ClockInterface
+		messageHandler MessageHandler
+	}
+	type messageArgs struct {
+		messageID   string
+		messageData interface{}
+	}
+	type args struct {
+		queue    string
+		messages []messageArgs
+	}
+
+	dsn, ok := os.LookupEnv("MESSAGE_BROKER_ADDRESS")
+	if !ok {
+		dsn = "amqp://rabbitmq:rabbitmq@localhost:5672"
+	}
+
+	var waitGroupInstance *sync.WaitGroup
+	for _, data := range []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			waitGroupInstance = new(sync.WaitGroup)
+
+			// prepare the client
+			client, err := NewClient(
+				dsn,
+				WithQueues([]string{data.args.queue}),
+				WithClock(data.fields.clock.Time),
+			)
+			require.NoError(test, err)
+			defer client.Close()
+
+			// start the message consuming
+			messageConsumer, err := NewMessageConsumer(
+				client,
+				data.args.queue,
+				data.fields.messageHandler,
+			)
+			go messageConsumer.StartConcurrently(runtime.NumCPU())
+			defer messageConsumer.Stop()
+			require.NoError(test, err)
+
+			// publish the messages
+			for _, message := range data.args.messages {
+				waitGroupInstance.Add(1)
+
+				err = client.PublishMessage(
+					data.args.queue,
+					message.messageID,
+					message.messageData,
+				)
+				require.NoError(test, err)
+			}
+			waitGroupInstance.Wait()
+
+			// check the results
+			mock.AssertExpectationsForObjects(
+				test,
+				data.fields.clock,
+				data.fields.messageHandler,
+			)
 		})
 	}
 }
