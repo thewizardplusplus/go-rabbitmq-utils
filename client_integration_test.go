@@ -38,7 +38,30 @@ func TestClient_PublishMessage_integration(test *testing.T) {
 		args          args
 		wantedMessage amqp.Delivery
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				clock: func() ClockInterface {
+					clock := new(MockClockInterface)
+					clock.
+						On("Time").
+						Return(time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC))
+
+					return clock
+				}(),
+			},
+			args: args{
+				queue:       "one",
+				messageID:   "message-id",
+				messageData: testMessage{FieldOne: 23, FieldTwo: "two"},
+			},
+			wantedMessage: amqp.Delivery{
+				MessageId:   "message-id",
+				Timestamp:   time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC),
+				ContentType: "application/json",
+				Body:        []byte(`{"FieldOne":23,"FieldTwo":"two"}`),
+			},
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			// prepare the client
