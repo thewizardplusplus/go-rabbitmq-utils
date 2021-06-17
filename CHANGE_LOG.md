@@ -1,5 +1,20 @@
 # Change Log
 
+## [v1.1.1](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1.1) (2021-06-17)
+
+Adding of the integration tests and example.
+
+- adding of the integration tests:
+  - for the message publishing via the client;
+  - for the message consuming via the client:
+    - including the message consumer using;
+- adding of the example:
+  - with the using:
+    - of the message consumer;
+    - of the wrappers for an outer message handler:
+      - acknowledger;
+      - JSON message handler.
+
 ## [v1.1](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1) (2021-06-10)
 
 Checking of the queue name used in the [RabbitMQ](https://www.rabbitmq.com/) client operations based on the declared queues and extending of auxiliary message fields with a message ID and message timestamp.
