@@ -3,7 +3,9 @@
 package rabbitmqutils
 
 import (
+	"fmt"
 	"os"
+	"reflect"
 	"runtime"
 	"sync"
 	"testing"
@@ -138,7 +140,77 @@ func TestClient_ConsumeMessages_integration(test *testing.T) {
 		fields fields
 		args   args
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success",
+			fields: fields{
+				clock: func() ClockInterface {
+					var timestampOffset int
+
+					clock := new(MockClockInterface)
+					clock.
+						On("Time").
+						Return(func() time.Time {
+							defer func() { timestampOffset++ }()
+
+							return time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC).
+								Add(time.Duration(timestampOffset) * time.Hour)
+						})
+
+					return clock
+				}(),
+				messageHandler: func() MessageHandler {
+					messageHandler := new(MockMessageHandler)
+					for i := 0; i < 100; i++ {
+						i := i
+
+						var singleAction sync.Once
+						messageHandler.
+							On(
+								"HandleMessage",
+								mock.MatchedBy(func(receivedMessage amqp.Delivery) bool {
+									defer singleAction.Do(func() {
+										waitGroupInstance.Done()
+										receivedMessage.Ack(false /* multiple */)
+									})
+
+									// clean the irrelevant message fields
+									receivedMessage = amqp.Delivery{
+										MessageId:   receivedMessage.MessageId,
+										Timestamp:   receivedMessage.Timestamp.In(time.UTC),
+										ContentType: receivedMessage.ContentType,
+										Body:        receivedMessage.Body,
+									}
+
+									return reflect.DeepEqual(receivedMessage, amqp.Delivery{
+										MessageId: fmt.Sprintf("message-id-%d", i),
+										Timestamp: time.Date(2006, time.January, 2, 15, 4, 5, 0, time.UTC).
+											Add(time.Duration(i) * time.Hour),
+										ContentType: "application/json",
+										Body:        []byte(fmt.Sprintf(`"message data #%d"`, i)),
+									})
+								}),
+							).
+							Return()
+					}
+
+					return messageHandler
+				}(),
+			},
+			args: args{
+				queue: "test",
+				messages: func() []messageArgs {
+					var messages []messageArgs
+					for i := 0; i < 100; i++ {
+						messages = append(messages, messageArgs{
+							messageID:   fmt.Sprintf("message-id-%d", i),
+							messageData: fmt.Sprintf("message data #%d", i),
+						})
+					}
+
+					return messages
+				}(),
+			},
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			waitGroupInstance = new(sync.WaitGroup)
