@@ -70,11 +70,11 @@ func ExampleClient() {
 			Logger: print.New(logger),
 		},
 	)
-	go messageConsumer.StartConcurrently(runtime.NumCPU())
-	defer messageConsumer.Stop()
 	if err != nil {
 		logger.Fatal(err)
 	}
+	go messageConsumer.StartConcurrently(runtime.NumCPU())
+	defer messageConsumer.Stop()
 
 	// publish the messages
 	for i := 0; i < 10; i++ {
