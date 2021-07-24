@@ -61,8 +61,14 @@ func NewMessageConsumer(
 
 // Start ...
 func (consumer MessageConsumer) Start() {
+	consumer.startMode.SetStartModeOnce(Started)
+
 	for message := range consumer.messages {
 		consumer.messageHandler.HandleMessage(message)
+	}
+
+	if consumer.startMode.GetStartMode() == Started {
+		consumer.stoppingCtxCanceller()
 	}
 }
 
