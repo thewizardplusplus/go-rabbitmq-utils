@@ -111,8 +111,9 @@ func TestMessageConsumer_Start(test *testing.T) {
 	}
 
 	for _, data := range []struct {
-		name   string
-		fields fields
+		name            string
+		fields          fields
+		wantedStartMode StartMode
 	}{
 		{
 			name: "success with the messages",
@@ -149,6 +150,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 					return stoppingCtxCanceller
 				}(),
 			},
+			wantedStartMode: Started,
 		},
 		{
 			name: "success without messages",
@@ -168,6 +170,39 @@ func TestMessageConsumer_Start(test *testing.T) {
 					return stoppingCtxCanceller
 				}(),
 			},
+			wantedStartMode: Started,
+		},
+		{
+			name: "success with the not default start mode",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					messagesAsSlice := []amqp.Delivery{
+						{Body: []byte("one")},
+						{Body: []byte("two")},
+					}
+					messages := make(chan amqp.Delivery, len(messagesAsSlice))
+					for _, message := range messagesAsSlice {
+						messages <- message
+					}
+
+					close(messages)
+					return messages
+				}(),
+				messageHandler: func() MessageHandler {
+					messageHandler := new(MockMessageHandler)
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("one")}).
+						Return()
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("two")}).
+						Return()
+
+					return messageHandler
+				}(),
+				startMode:            &StartModeHolder{mode: 23},
+				stoppingCtxCanceller: new(MockContextCancellerInterface),
+			},
+			wantedStartMode: 23,
 		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
@@ -184,6 +219,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 				data.fields.messageHandler,
 				data.fields.stoppingCtxCanceller,
 			)
+			assert.Equal(test, data.wantedStartMode, consumer.startMode.GetStartMode())
 		})
 	}
 }
