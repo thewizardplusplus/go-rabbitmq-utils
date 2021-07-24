@@ -228,6 +228,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 	type fields struct {
 		messages             <-chan amqp.Delivery
 		messageHandler       MessageHandler
+		startMode            *StartModeHolder
 		stoppingCtxCanceller ContextCancellerInterface
 	}
 	type args struct {
@@ -270,6 +271,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 
 					return messageHandler
 				}(),
+				startMode: &StartModeHolder{mode: NotStarted},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -312,6 +314,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 
 					return messageHandler
 				}(),
+				startMode: &StartModeHolder{mode: NotStarted},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -333,6 +336,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 					return messages
 				}(),
 				messageHandler: new(MockMessageHandler),
+				startMode:      &StartModeHolder{mode: NotStarted},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -354,6 +358,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 					return messages
 				}(),
 				messageHandler: new(MockMessageHandler),
+				startMode:      &StartModeHolder{mode: NotStarted},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -370,6 +375,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			consumer := MessageConsumer{
 				messages:             data.fields.messages,
 				messageHandler:       data.fields.messageHandler,
+				startMode:            data.fields.startMode,
 				stoppingCtxCanceller: data.fields.stoppingCtxCanceller.CancelContext,
 			}
 			consumer.StartConcurrently(data.args.concurrency)
