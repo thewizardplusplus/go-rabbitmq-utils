@@ -46,6 +46,11 @@ func TestNewMessageConsumer(test *testing.T) {
 				assert.Equal(test, "test", messageConsumer.queue)
 				assert.Len(test, messageConsumer.messages, 0)
 				assert.Equal(test, new(MockMessageHandler), messageConsumer.messageHandler)
+				assert.Equal(
+					test,
+					&StartModeHolder{mode: NotStarted},
+					messageConsumer.startMode,
+				)
 
 				for _, field := range []interface{}{
 					messageConsumer.client,
