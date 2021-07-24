@@ -32,3 +32,13 @@ func (holder *StartModeHolder) GetStartMode() StartMode {
 
 	return holder.mode
 }
+
+// SetStartModeOnce ...
+func (holder *StartModeHolder) SetStartModeOnce(mode StartMode) {
+	holder.lock.Lock()
+	defer holder.lock.Unlock()
+
+	if holder.mode == NotStarted {
+		holder.mode = mode
+	}
+}
