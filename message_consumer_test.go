@@ -104,8 +104,10 @@ func TestNewMessageConsumer(test *testing.T) {
 
 func TestMessageConsumer_Start(test *testing.T) {
 	type fields struct {
-		messages       <-chan amqp.Delivery
-		messageHandler MessageHandler
+		messages             <-chan amqp.Delivery
+		messageHandler       MessageHandler
+		startMode            *StartModeHolder
+		stoppingCtxCanceller ContextCancellerInterface
 	}
 
 	for _, data := range []struct {
@@ -139,6 +141,13 @@ func TestMessageConsumer_Start(test *testing.T) {
 
 					return messageHandler
 				}(),
+				startMode: &StartModeHolder{mode: NotStarted},
+				stoppingCtxCanceller: func() ContextCancellerInterface {
+					stoppingCtxCanceller := new(MockContextCancellerInterface)
+					stoppingCtxCanceller.On("CancelContext").Return()
+
+					return stoppingCtxCanceller
+				}(),
 			},
 		},
 		{
@@ -151,17 +160,30 @@ func TestMessageConsumer_Start(test *testing.T) {
 					return messages
 				}(),
 				messageHandler: new(MockMessageHandler),
+				startMode:      &StartModeHolder{mode: NotStarted},
+				stoppingCtxCanceller: func() ContextCancellerInterface {
+					stoppingCtxCanceller := new(MockContextCancellerInterface)
+					stoppingCtxCanceller.On("CancelContext").Return()
+
+					return stoppingCtxCanceller
+				}(),
 			},
 		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			consumer := MessageConsumer{
-				messages:       data.fields.messages,
-				messageHandler: data.fields.messageHandler,
+				messages:             data.fields.messages,
+				messageHandler:       data.fields.messageHandler,
+				startMode:            data.fields.startMode,
+				stoppingCtxCanceller: data.fields.stoppingCtxCanceller.CancelContext,
 			}
 			consumer.Start()
 
-			mock.AssertExpectationsForObjects(test, data.fields.messageHandler)
+			mock.AssertExpectationsForObjects(
+				test,
+				data.fields.messageHandler,
+				data.fields.stoppingCtxCanceller,
+			)
 		})
 	}
 }
