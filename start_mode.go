@@ -24,3 +24,11 @@ type StartModeHolder struct {
 func NewStartModeHolder() *StartModeHolder {
 	return &StartModeHolder{mode: NotStarted}
 }
+
+// GetStartMode ...
+func (holder *StartModeHolder) GetStartMode() StartMode {
+	holder.lock.RLock()
+	defer holder.lock.RUnlock()
+
+	return holder.mode
+}
