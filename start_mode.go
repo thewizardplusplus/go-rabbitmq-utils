@@ -19,3 +19,8 @@ type StartModeHolder struct {
 	lock sync.RWMutex
 	mode StartMode
 }
+
+// NewStartModeHolder ...
+func NewStartModeHolder() *StartModeHolder {
+	return &StartModeHolder{mode: NotStarted}
+}
