@@ -74,6 +74,8 @@ func (consumer MessageConsumer) Start() {
 
 // StartConcurrently ...
 func (consumer MessageConsumer) StartConcurrently(concurrency int) {
+	consumer.startMode.SetStartModeOnce(StartedConcurrently)
+
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(concurrency)
 
@@ -86,7 +88,9 @@ func (consumer MessageConsumer) StartConcurrently(concurrency int) {
 	}
 
 	waitGroup.Wait()
-	consumer.stoppingCtxCanceller()
+	if consumer.startMode.GetStartMode() == StartedConcurrently {
+		consumer.stoppingCtxCanceller()
+	}
 }
 
 // Stop ...
