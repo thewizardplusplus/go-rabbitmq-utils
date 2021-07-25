@@ -61,36 +61,29 @@ func NewMessageConsumer(
 
 // Start ...
 func (consumer MessageConsumer) Start() {
-	consumer.startMode.SetStartModeOnce(Started)
-
-	for message := range consumer.messages {
-		consumer.messageHandler.HandleMessage(message)
-	}
-
-	if consumer.startMode.GetStartMode() == Started {
-		consumer.stoppingCtxCanceller()
-	}
+	consumer.basicStart(Started, func() {
+		for message := range consumer.messages {
+			consumer.messageHandler.HandleMessage(message)
+		}
+	})
 }
 
 // StartConcurrently ...
 func (consumer MessageConsumer) StartConcurrently(concurrency int) {
-	consumer.startMode.SetStartModeOnce(StartedConcurrently)
+	consumer.basicStart(StartedConcurrently, func() {
+		var waitGroup sync.WaitGroup
+		waitGroup.Add(concurrency)
 
-	var waitGroup sync.WaitGroup
-	waitGroup.Add(concurrency)
+		for i := 0; i < concurrency; i++ {
+			go func() {
+				defer waitGroup.Done()
 
-	for i := 0; i < concurrency; i++ {
-		go func() {
-			defer waitGroup.Done()
+				consumer.Start()
+			}()
+		}
 
-			consumer.Start()
-		}()
-	}
-
-	waitGroup.Wait()
-	if consumer.startMode.GetStartMode() == StartedConcurrently {
-		consumer.stoppingCtxCanceller()
-	}
+		waitGroup.Wait()
+	})
 }
 
 // Stop ...
@@ -101,4 +94,14 @@ func (consumer MessageConsumer) Stop() error {
 
 	<-consumer.stoppingCtx.Done()
 	return nil
+}
+
+func (consumer MessageConsumer) basicStart(mode StartMode, handler func()) {
+	consumer.startMode.SetStartModeOnce(mode)
+
+	handler()
+
+	if consumer.startMode.GetStartMode() == mode {
+		consumer.stoppingCtxCanceller()
+	}
 }
