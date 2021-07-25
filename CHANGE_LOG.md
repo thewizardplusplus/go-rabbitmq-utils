@@ -1,5 +1,13 @@
 # Change Log
 
+## [v1.1.2](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1.2) (2021-07-25)
+
+Fixing of the bugs.
+
+- fix the bugs:
+  - in the starting of the message consuming;
+  - in the example.
+
 ## [v1.1.1](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1.1) (2021-06-17)
 
 Adding of the integration tests and example.
