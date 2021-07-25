@@ -109,7 +109,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 	for _, data := range []struct {
 		name            string
 		fields          fields
-		wantedStartMode StartMode
+		wantedStartMode startMode
 	}{
 		{
 			name: "success with the messages",
@@ -146,7 +146,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 					return stoppingCtxCanceller
 				}(),
 			},
-			wantedStartMode: Started,
+			wantedStartMode: started,
 		},
 		{
 			name: "success without messages",
@@ -166,7 +166,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 					return stoppingCtxCanceller
 				}(),
 			},
-			wantedStartMode: Started,
+			wantedStartMode: started,
 		},
 		{
 			name: "success with the not default start mode",
@@ -235,7 +235,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 		name            string
 		fields          fields
 		args            args
-		wantedStartMode StartMode
+		wantedStartMode startMode
 	}{
 		{
 			name: "success with the messages and without concurrency",
@@ -279,7 +279,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 1,
 			},
-			wantedStartMode: StartedConcurrently,
+			wantedStartMode: startedConcurrently,
 		},
 		{
 			name: "success with the messages and concurrency",
@@ -323,7 +323,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 5,
 			},
-			wantedStartMode: StartedConcurrently,
+			wantedStartMode: startedConcurrently,
 		},
 		{
 			name: "success without messages and concurrency",
@@ -346,7 +346,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 1,
 			},
-			wantedStartMode: StartedConcurrently,
+			wantedStartMode: startedConcurrently,
 		},
 		{
 			name: "success without messages and with concurrency",
@@ -369,7 +369,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 5,
 			},
-			wantedStartMode: StartedConcurrently,
+			wantedStartMode: startedConcurrently,
 		},
 		{
 			name: "success with the not default start mode",

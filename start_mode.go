@@ -4,29 +4,27 @@ import (
 	"sync"
 )
 
-// StartMode ...
-type StartMode int
+type startMode int
 
-// ...
 const (
-	NotStarted StartMode = iota
-	Started
-	StartedConcurrently
+	notStarted startMode = iota
+	started
+	startedConcurrently
 )
 
 // StartModeHolder ...
 type StartModeHolder struct {
 	lock sync.RWMutex
-	mode StartMode
+	mode startMode
 }
 
 // NewStartModeHolder ...
 func NewStartModeHolder() *StartModeHolder {
-	return &StartModeHolder{mode: NotStarted}
+	return &StartModeHolder{mode: notStarted}
 }
 
 // GetStartMode ...
-func (holder *StartModeHolder) GetStartMode() StartMode {
+func (holder *StartModeHolder) GetStartMode() startMode {
 	holder.lock.RLock()
 	defer holder.lock.RUnlock()
 
@@ -34,11 +32,11 @@ func (holder *StartModeHolder) GetStartMode() StartMode {
 }
 
 // SetStartModeOnce ...
-func (holder *StartModeHolder) SetStartModeOnce(mode StartMode) {
+func (holder *StartModeHolder) SetStartModeOnce(mode startMode) {
 	holder.lock.Lock()
 	defer holder.lock.Unlock()
 
-	if holder.mode == NotStarted {
+	if holder.mode == notStarted {
 		holder.mode = mode
 	}
 }

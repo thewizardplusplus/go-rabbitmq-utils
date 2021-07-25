@@ -61,7 +61,7 @@ func NewMessageConsumer(
 
 // Start ...
 func (consumer MessageConsumer) Start() {
-	consumer.basicStart(Started, func() {
+	consumer.basicStart(started, func() {
 		for message := range consumer.messages {
 			consumer.messageHandler.HandleMessage(message)
 		}
@@ -70,7 +70,7 @@ func (consumer MessageConsumer) Start() {
 
 // StartConcurrently ...
 func (consumer MessageConsumer) StartConcurrently(concurrency int) {
-	consumer.basicStart(StartedConcurrently, func() {
+	consumer.basicStart(startedConcurrently, func() {
 		var waitGroup sync.WaitGroup
 		waitGroup.Add(concurrency)
 
@@ -96,7 +96,7 @@ func (consumer MessageConsumer) Stop() error {
 	return nil
 }
 
-func (consumer MessageConsumer) basicStart(mode StartMode, handler func()) {
+func (consumer MessageConsumer) basicStart(mode startMode, handler func()) {
 	consumer.startMode.SetStartModeOnce(mode)
 
 	handler()
