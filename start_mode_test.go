@@ -12,3 +12,30 @@ func Test_startModeHolder_getStartMode(test *testing.T) {
 
 	assert.Equal(test, startMode(23), receivedStartMode)
 }
+
+func Test_startModeHolder_setStartModeOnce(test *testing.T) {
+	type fields struct {
+		mode startMode
+	}
+	type args struct {
+		mode startMode
+	}
+
+	for _, data := range []struct {
+		name            string
+		fields          fields
+		args            args
+		wantedStartMode startMode
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			holder := &startModeHolder{
+				mode: data.fields.mode,
+			}
+			holder.setStartModeOnce(data.args.mode)
+
+			assert.Equal(test, data.wantedStartMode, holder.getStartMode())
+		})
+	}
+}
