@@ -12,27 +12,23 @@ const (
 	startedConcurrently
 )
 
-// StartModeHolder ...
-type StartModeHolder struct {
+type startModeHolder struct {
 	lock sync.RWMutex
 	mode startMode
 }
 
-// NewStartModeHolder ...
-func NewStartModeHolder() *StartModeHolder {
-	return &StartModeHolder{mode: notStarted}
+func newStartModeHolder() *startModeHolder {
+	return &startModeHolder{mode: notStarted}
 }
 
-// GetStartMode ...
-func (holder *StartModeHolder) GetStartMode() startMode {
+func (holder *startModeHolder) getStartMode() startMode {
 	holder.lock.RLock()
 	defer holder.lock.RUnlock()
 
 	return holder.mode
 }
 
-// SetStartModeOnce ...
-func (holder *StartModeHolder) SetStartModeOnce(mode startMode) {
+func (holder *startModeHolder) setStartModeOnce(mode startMode) {
 	holder.lock.Lock()
 	defer holder.lock.Unlock()
 

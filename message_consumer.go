@@ -29,7 +29,7 @@ type MessageConsumer struct {
 	queue                string
 	messages             <-chan amqp.Delivery
 	messageHandler       MessageHandler
-	startMode            *StartModeHolder
+	startMode            *startModeHolder
 	stoppingCtx          context.Context
 	stoppingCtxCanceller context.CancelFunc
 }
@@ -45,7 +45,7 @@ func NewMessageConsumer(
 		return MessageConsumer{}, errors.Wrap(err, "unable to start the consuming")
 	}
 
-	startMode := NewStartModeHolder()
+	startMode := newStartModeHolder()
 	stoppingCtx, stoppingCtxCanceller := context.WithCancel(context.Background())
 	messageConsumer := MessageConsumer{
 		client:               client,
@@ -97,11 +97,11 @@ func (consumer MessageConsumer) Stop() error {
 }
 
 func (consumer MessageConsumer) basicStart(mode startMode, handler func()) {
-	consumer.startMode.SetStartModeOnce(mode)
+	consumer.startMode.setStartModeOnce(mode)
 
 	handler()
 
-	if consumer.startMode.GetStartMode() == mode {
+	if consumer.startMode.getStartMode() == mode {
 		consumer.stoppingCtxCanceller()
 	}
 }
