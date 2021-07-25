@@ -46,7 +46,7 @@ func TestNewMessageConsumer(test *testing.T) {
 				assert.Equal(test, "test", messageConsumer.queue)
 				assert.Len(test, messageConsumer.messages, 0)
 				assert.Equal(test, new(MockMessageHandler), messageConsumer.messageHandler)
-				assert.Equal(test, newStartModeHolder(), messageConsumer.startMode)
+				assert.Equal(test, &startModeHolder{}, messageConsumer.startMode)
 
 				for _, field := range []interface{}{
 					messageConsumer.client,
@@ -138,7 +138,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 
 					return messageHandler
 				}(),
-				startMode: newStartModeHolder(),
+				startMode: &startModeHolder{},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -158,7 +158,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 					return messages
 				}(),
 				messageHandler: new(MockMessageHandler),
-				startMode:      newStartModeHolder(),
+				startMode:      &startModeHolder{},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -268,7 +268,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 
 					return messageHandler
 				}(),
-				startMode: newStartModeHolder(),
+				startMode: &startModeHolder{},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -312,7 +312,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 
 					return messageHandler
 				}(),
-				startMode: newStartModeHolder(),
+				startMode: &startModeHolder{},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -335,7 +335,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 					return messages
 				}(),
 				messageHandler: new(MockMessageHandler),
-				startMode:      newStartModeHolder(),
+				startMode:      &startModeHolder{},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()
@@ -358,7 +358,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 					return messages
 				}(),
 				messageHandler: new(MockMessageHandler),
-				startMode:      newStartModeHolder(),
+				startMode:      &startModeHolder{},
 				stoppingCtxCanceller: func() ContextCancellerInterface {
 					stoppingCtxCanceller := new(MockContextCancellerInterface)
 					stoppingCtxCanceller.On("CancelContext").Return()

@@ -45,7 +45,7 @@ func NewMessageConsumer(
 		return MessageConsumer{}, errors.Wrap(err, "unable to start the consuming")
 	}
 
-	startMode := newStartModeHolder()
+	startMode := &startModeHolder{}
 	stoppingCtx, stoppingCtxCanceller := context.WithCancel(context.Background())
 	messageConsumer := MessageConsumer{
 		client:               client,

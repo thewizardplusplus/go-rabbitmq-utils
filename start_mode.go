@@ -17,10 +17,6 @@ type startModeHolder struct {
 	mode startMode
 }
 
-func newStartModeHolder() *startModeHolder {
-	return &startModeHolder{mode: notStarted}
-}
-
 func (holder *startModeHolder) getStartMode() startMode {
 	holder.lock.RLock()
 	defer holder.lock.RUnlock()
