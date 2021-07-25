@@ -236,9 +236,10 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 	}
 
 	for _, data := range []struct {
-		name   string
-		fields fields
-		args   args
+		name            string
+		fields          fields
+		args            args
+		wantedStartMode StartMode
 	}{
 		{
 			name: "success with the messages and without concurrency",
@@ -282,6 +283,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 1,
 			},
+			wantedStartMode: StartedConcurrently,
 		},
 		{
 			name: "success with the messages and concurrency",
@@ -325,6 +327,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 5,
 			},
+			wantedStartMode: StartedConcurrently,
 		},
 		{
 			name: "success without messages and concurrency",
@@ -347,6 +350,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 1,
 			},
+			wantedStartMode: StartedConcurrently,
 		},
 		{
 			name: "success without messages and with concurrency",
@@ -369,6 +373,46 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 			args: args{
 				concurrency: 5,
 			},
+			wantedStartMode: StartedConcurrently,
+		},
+		{
+			name: "success with the not default start mode",
+			fields: fields{
+				messages: func() <-chan amqp.Delivery {
+					var messagesAsSlice []amqp.Delivery
+					for i := 0; i < 100; i++ {
+						messagesAsSlice = append(messagesAsSlice, amqp.Delivery{
+							Body: []byte(fmt.Sprintf("message #%d", i)),
+						})
+					}
+
+					messages := make(chan amqp.Delivery, len(messagesAsSlice))
+					for _, message := range messagesAsSlice {
+						messages <- message
+					}
+
+					close(messages)
+					return messages
+				}(),
+				messageHandler: func() MessageHandler {
+					messageHandler := new(MockMessageHandler)
+					for i := 0; i < 100; i++ {
+						messageHandler.
+							On("HandleMessage", amqp.Delivery{
+								Body: []byte(fmt.Sprintf("message #%d", i)),
+							}).
+							Return()
+					}
+
+					return messageHandler
+				}(),
+				startMode:            &StartModeHolder{mode: 23},
+				stoppingCtxCanceller: new(MockContextCancellerInterface),
+			},
+			args: args{
+				concurrency: 5,
+			},
+			wantedStartMode: 23,
 		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
@@ -385,6 +429,7 @@ func TestMessageConsumer_StartConcurrently(test *testing.T) {
 				data.fields.messageHandler,
 				data.fields.stoppingCtxCanceller,
 			)
+			assert.Equal(test, data.wantedStartMode, consumer.startMode.GetStartMode())
 		})
 	}
 }
