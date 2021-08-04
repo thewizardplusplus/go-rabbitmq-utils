@@ -620,7 +620,113 @@ func TestClient_GetMessage(test *testing.T) {
 		wantedMessage amqp.Delivery
 		wantedErr     assert.ErrorAssertionFunc
 	}{
-		// TODO: Add test cases.
+		{
+			name: "success (on the first try)",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					message := amqp.Delivery{Body: []byte("message")}
+
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Get",
+							"test", // queue name
+							false,  // auto-acknowledge
+						).
+						Return(message, true, nil)
+
+					return channel
+				}(),
+				queues: mapset.NewSet("test"),
+			},
+			args: args{
+				queue: "test",
+			},
+			wantedMessage: amqp.Delivery{Body: []byte("message")},
+			wantedErr:     assert.NoError,
+		},
+		{
+			name: "success (not on the first try)",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					message := amqp.Delivery{Body: []byte("message")}
+
+					var tryCounter int
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Get",
+							"test", // queue name
+							false,  // auto-acknowledge
+						).
+						Return(
+							func(string, bool) amqp.Delivery {
+								if tryCounter < 4 {
+									return amqp.Delivery{}
+								}
+
+								return message
+							},
+							func(string, bool) bool {
+								defer func() { tryCounter++ }()
+
+								return tryCounter >= 4
+							},
+							nil,
+						).
+						Times(5)
+
+					return channel
+				}(),
+				queues: mapset.NewSet("test"),
+			},
+			args: args{
+				queue: "test",
+			},
+			wantedMessage: amqp.Delivery{Body: []byte("message")},
+			wantedErr:     assert.NoError,
+		},
+		{
+			name: "error with an unknown queue",
+			fields: fields{
+				channel: new(MockMessageBrokerChannel),
+				queues:  mapset.NewSet("test"),
+			},
+			args: args{
+				queue: "unknown",
+			},
+			wantedMessage: amqp.Delivery{},
+			wantedErr: func(
+				test assert.TestingT,
+				err error,
+				msgAndArgs ...interface{},
+			) bool {
+				return assert.Equal(test, errUnknownQueue, err, msgAndArgs...)
+			},
+		},
+		{
+			name: "error with getting of a message",
+			fields: fields{
+				channel: func() MessageBrokerChannel {
+					channel := new(MockMessageBrokerChannel)
+					channel.
+						On(
+							"Get",
+							"test", // queue name
+							false,  // auto-acknowledge
+						).
+						Return(amqp.Delivery{}, false, iotest.ErrTimeout)
+
+					return channel
+				}(),
+				queues: mapset.NewSet("test"),
+			},
+			args: args{
+				queue: "test",
+			},
+			wantedMessage: amqp.Delivery{},
+			wantedErr:     assert.Error,
+		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
 			client := Client{
