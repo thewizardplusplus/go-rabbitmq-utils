@@ -1,5 +1,16 @@
 # Change Log
 
+## [v1.1.3](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1.3) (2021-08-04)
+
+Adding of the getting of a single message to the [RabbitMQ](https://www.rabbitmq.com/) client.
+
+- client:
+  - operations:
+    - with messages:
+      - getting of a single message:
+        - check the specified queue name based on the declared queues;
+        - block the execution flow until the message is received or an error occurs.
+
 ## [v1.1.2](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1.2) (2021-07-25)
 
 Fixing of the bugs.
