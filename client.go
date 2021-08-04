@@ -2,6 +2,7 @@ package rabbitmqutils
 
 import (
 	"encoding/json"
+	"runtime"
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
@@ -183,6 +184,29 @@ func (client Client) PublishMessage(
 	}
 
 	return nil
+}
+
+// GetMessage ...
+func (client Client) GetMessage(queue string) (amqp.Delivery, error) {
+	if !client.queues.Contains(queue) {
+		return amqp.Delivery{}, errUnknownQueue
+	}
+
+	var message amqp.Delivery
+	for ok := false; !ok; {
+		var err error
+		message, ok, err = client.channel.Get(
+			queue, // queue name
+			false, // auto-acknowledge
+		)
+		if err != nil {
+			return amqp.Delivery{}, errors.Wrap(err, "unable to get the message")
+		}
+
+		runtime.Gosched()
+	}
+
+	return message, nil
 }
 
 // ConsumeMessages ...
