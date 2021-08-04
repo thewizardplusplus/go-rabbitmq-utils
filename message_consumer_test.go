@@ -220,6 +220,7 @@ func TestMessageConsumer_Start(test *testing.T) {
 	}
 }
 
+// nolint: gocyclo
 func TestMessageConsumer_StartConcurrently(test *testing.T) {
 	type fields struct {
 		messages             <-chan amqp.Delivery
