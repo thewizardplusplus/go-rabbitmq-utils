@@ -28,6 +28,9 @@ The library that provides utility entities for working with [RabbitMQ](https://w
             - receiving of a custom message ID (optionally);
             - automatic generating of a message ID (optionally);
           - setting of a message timestamp;
+      - getting of a single message:
+        - check the specified queue name based on the declared queues;
+        - block the execution flow until the message is received or an error occurs;
       - starting of message consuming:
         - check the specified queue name based on the declared queues;
         - automatic generating of a consumer name;
