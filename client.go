@@ -40,6 +40,10 @@ type MessageBrokerChannel interface {
 		immediate bool,
 		message amqp.Publishing,
 	) error
+	Get(
+		queueName string,
+		autoAcknowledge bool,
+	) (message amqp.Delivery, ok bool, err error)
 	Consume(
 		queueName string,
 		consumerName string,

@@ -63,6 +63,34 @@ func (_m *MockMessageBrokerChannel) Consume(queueName string, consumerName strin
 	return r0, r1
 }
 
+// Get provides a mock function with given fields: queueName, autoAcknowledge
+func (_m *MockMessageBrokerChannel) Get(queueName string, autoAcknowledge bool) (amqp.Delivery, bool, error) {
+	ret := _m.Called(queueName, autoAcknowledge)
+
+	var r0 amqp.Delivery
+	if rf, ok := ret.Get(0).(func(string, bool) amqp.Delivery); ok {
+		r0 = rf(queueName, autoAcknowledge)
+	} else {
+		r0 = ret.Get(0).(amqp.Delivery)
+	}
+
+	var r1 bool
+	if rf, ok := ret.Get(1).(func(string, bool) bool); ok {
+		r1 = rf(queueName, autoAcknowledge)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	var r2 error
+	if rf, ok := ret.Get(2).(func(string, bool) error); ok {
+		r2 = rf(queueName, autoAcknowledge)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
 // Publish provides a mock function with given fields: exchange, queueName, mandatory, immediate, message
 func (_m *MockMessageBrokerChannel) Publish(exchange string, queueName string, mandatory bool, immediate bool, message amqp.Publishing) error {
 	ret := _m.Called(exchange, queueName, mandatory, immediate, message)
