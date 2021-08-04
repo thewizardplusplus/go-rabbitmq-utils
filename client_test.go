@@ -604,6 +604,38 @@ func TestClient_PublishMessage(test *testing.T) {
 	}
 }
 
+func TestClient_GetMessage(test *testing.T) {
+	type fields struct {
+		channel MessageBrokerChannel
+		queues  mapset.Set
+	}
+	type args struct {
+		queue string
+	}
+
+	for _, data := range []struct {
+		name          string
+		fields        fields
+		args          args
+		wantedMessage amqp.Delivery
+		wantedErr     assert.ErrorAssertionFunc
+	}{
+		// TODO: Add test cases.
+	} {
+		test.Run(data.name, func(test *testing.T) {
+			client := Client{
+				channel: data.fields.channel,
+				queues:  data.fields.queues,
+			}
+			receivedMessage, receivedErr := client.GetMessage(data.args.queue)
+
+			mock.AssertExpectationsForObjects(test, data.fields.channel)
+			assert.Equal(test, data.wantedMessage, receivedMessage)
+			data.wantedErr(test, receivedErr)
+		})
+	}
+}
+
 func TestClient_ConsumeMessages(test *testing.T) {
 	type fields struct {
 		channel MessageBrokerChannel
