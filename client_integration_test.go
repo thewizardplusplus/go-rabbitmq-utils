@@ -86,19 +86,9 @@ func TestClient_PublishMessage_integration(test *testing.T) {
 			require.NoError(test, err)
 
 			// receive the message
-			connection, err := amqp.Dial(dsn)
+			receivedMessage, err := client.GetMessage(data.args.queue)
 			require.NoError(test, err)
-			defer connection.Close()
-
-			channel, err := connection.Channel()
-			require.NoError(test, err)
-			defer channel.Close()
-
-			receivedMessage, _, err := channel.Get(
-				data.args.queue, // queue name
-				true,            // auto-acknowledge
-			)
-			require.NoError(test, err)
+			defer receivedMessage.Ack(false /* multiple */)
 
 			// clean the irrelevant message fields
 			receivedMessage = amqp.Delivery{
