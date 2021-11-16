@@ -1,5 +1,14 @@
 # Change Log
 
+## [v1.1.4](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1.4) (2021-11-16)
+
+Simplify the `rabbitmqutils.MessageConsumer` structure via the [github.com/thewizardplusplus/go-sync-utils](https://github.com/thewizardplusplus/go-sync-utils) package.
+
+- refactoring:
+  - add the [github.com/thewizardplusplus/go-sync-utils](https://github.com/thewizardplusplus/go-sync-utils) package to the dependencies;
+  - simplify the `rabbitmqutils.MessageConsumer` structure via the [github.com/thewizardplusplus/go-sync-utils](https://github.com/thewizardplusplus/go-sync-utils) package;
+  - simplify the example.
+
 ## [v1.1.3](https://github.com/thewizardplusplus/go-rabbitmq-utils/tree/v1.1.3) (2021-08-04)
 
 Adding of the getting of a single message to the [RabbitMQ](https://www.rabbitmq.com/) client.
