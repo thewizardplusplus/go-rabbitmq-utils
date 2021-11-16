@@ -20,9 +20,8 @@ type exampleMessage struct {
 }
 
 type messageHandler struct {
-	waitGroupInstance *sync.WaitGroup
-	locker            sync.Mutex
-	messages          []exampleMessage
+	locker   sync.Mutex
+	messages []exampleMessage
 }
 
 func (messageHandler *messageHandler) MessageType() reflect.Type {
@@ -30,8 +29,6 @@ func (messageHandler *messageHandler) MessageType() reflect.Type {
 }
 
 func (messageHandler *messageHandler) HandleMessage(message interface{}) error {
-	defer messageHandler.waitGroupInstance.Done()
-
 	messageHandler.locker.Lock()
 	defer messageHandler.locker.Unlock()
 
@@ -40,7 +37,7 @@ func (messageHandler *messageHandler) HandleMessage(message interface{}) error {
 	return nil
 }
 
-func ExampleClient() {
+func Example() {
 	dsn, ok := os.LookupEnv("MESSAGE_BROKER_ADDRESS")
 	if !ok {
 		dsn = "amqp://rabbitmq:rabbitmq@localhost:5672"
@@ -56,8 +53,7 @@ func ExampleClient() {
 	defer client.Close()
 
 	// start the message consuming
-	var waitGroupInstance sync.WaitGroup
-	messageHandler := messageHandler{waitGroupInstance: &waitGroupInstance}
+	var messageHandler messageHandler
 	messageConsumer, err := rabbitmqutils.NewMessageConsumer(
 		client,
 		"example",
@@ -74,12 +70,9 @@ func ExampleClient() {
 		logger.Fatal(err)
 	}
 	go messageConsumer.StartConcurrently(runtime.NumCPU())
-	defer messageConsumer.Stop()
 
 	// publish the messages
 	for i := 0; i < 10; i++ {
-		waitGroupInstance.Add(1)
-
 		err = client.PublishMessage("example", "", exampleMessage{
 			FieldOne: 10 + i,
 			FieldTwo: fmt.Sprintf("message data #%d", i),
@@ -88,7 +81,7 @@ func ExampleClient() {
 			logger.Fatal(err)
 		}
 	}
-	waitGroupInstance.Wait()
+	messageConsumer.Stop()
 
 	// print the results
 	for _, message := range messageHandler.messages {
