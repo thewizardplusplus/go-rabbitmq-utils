@@ -2,13 +2,13 @@ package rabbitmqutils
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"testing/iotest"
 
 	"github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewMessageConsumer(test *testing.T) {
@@ -44,15 +44,10 @@ func TestNewMessageConsumer(test *testing.T) {
 			) {
 				assert.IsType(test, new(MockMessageConsumerClient), messageConsumer.client)
 				assert.Equal(test, "test", messageConsumer.queue)
-				assert.Len(test, messageConsumer.messages, 0)
-				assert.Equal(test, new(MockMessageHandler), messageConsumer.messageHandler)
-				assert.Equal(test, &startModeHolder{}, messageConsumer.startMode)
 
 				for _, field := range []interface{}{
 					messageConsumer.client,
-					messageConsumer.messages,
 					messageConsumer.stoppingCtx,
-					messageConsumer.stoppingCtxCanceller,
 				} {
 					assert.NotNil(test, field)
 				}
@@ -98,361 +93,136 @@ func TestNewMessageConsumer(test *testing.T) {
 	}
 }
 
-func TestMessageConsumer_Start(test *testing.T) {
-	type fields struct {
-		messages             <-chan amqp.Delivery
-		messageHandler       MessageHandler
-		startMode            *startModeHolder
-		stoppingCtxCanceller ContextCancellerInterface
-	}
-
-	for _, data := range []struct {
-		name            string
-		fields          fields
-		wantedStartMode startMode
-	}{
-		{
-			name: "success with the messages",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					messagesAsSlice := []amqp.Delivery{
-						{Body: []byte("one")},
-						{Body: []byte("two")},
-					}
-					messages := make(chan amqp.Delivery, len(messagesAsSlice))
-					for _, message := range messagesAsSlice {
-						messages <- message
-					}
-
-					close(messages)
-					return messages
-				}(),
-				messageHandler: func() MessageHandler {
-					messageHandler := new(MockMessageHandler)
-					messageHandler.
-						On("HandleMessage", amqp.Delivery{Body: []byte("one")}).
-						Return()
-					messageHandler.
-						On("HandleMessage", amqp.Delivery{Body: []byte("two")}).
-						Return()
-
-					return messageHandler
-				}(),
-				startMode: &startModeHolder{},
-				stoppingCtxCanceller: func() ContextCancellerInterface {
-					stoppingCtxCanceller := new(MockContextCancellerInterface)
-					stoppingCtxCanceller.On("CancelContext").Return()
-
-					return stoppingCtxCanceller
-				}(),
-			},
-			wantedStartMode: started,
-		},
-		{
-			name: "success without messages",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					messages := make(chan amqp.Delivery)
-					close(messages)
-
-					return messages
-				}(),
-				messageHandler: new(MockMessageHandler),
-				startMode:      &startModeHolder{},
-				stoppingCtxCanceller: func() ContextCancellerInterface {
-					stoppingCtxCanceller := new(MockContextCancellerInterface)
-					stoppingCtxCanceller.On("CancelContext").Return()
-
-					return stoppingCtxCanceller
-				}(),
-			},
-			wantedStartMode: started,
-		},
-		{
-			name: "success with the not default start mode",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					messagesAsSlice := []amqp.Delivery{
-						{Body: []byte("one")},
-						{Body: []byte("two")},
-					}
-					messages := make(chan amqp.Delivery, len(messagesAsSlice))
-					for _, message := range messagesAsSlice {
-						messages <- message
-					}
-
-					close(messages)
-					return messages
-				}(),
-				messageHandler: func() MessageHandler {
-					messageHandler := new(MockMessageHandler)
-					messageHandler.
-						On("HandleMessage", amqp.Delivery{Body: []byte("one")}).
-						Return()
-					messageHandler.
-						On("HandleMessage", amqp.Delivery{Body: []byte("two")}).
-						Return()
-
-					return messageHandler
-				}(),
-				startMode:            &startModeHolder{mode: 23},
-				stoppingCtxCanceller: new(MockContextCancellerInterface),
-			},
-			wantedStartMode: 23,
-		},
-	} {
-		test.Run(data.name, func(test *testing.T) {
-			consumer := MessageConsumer{
-				messages:             data.fields.messages,
-				messageHandler:       data.fields.messageHandler,
-				startMode:            data.fields.startMode,
-				stoppingCtxCanceller: data.fields.stoppingCtxCanceller.CancelContext,
-			}
-			consumer.Start()
-
-			mock.AssertExpectationsForObjects(
-				test,
-				data.fields.messageHandler,
-				data.fields.stoppingCtxCanceller,
-			)
-			assert.Equal(test, data.wantedStartMode, consumer.startMode.getStartMode())
-		})
-	}
-}
-
-// nolint: gocyclo
-func TestMessageConsumer_StartConcurrently(test *testing.T) {
-	type fields struct {
-		messages             <-chan amqp.Delivery
-		messageHandler       MessageHandler
-		startMode            *startModeHolder
-		stoppingCtxCanceller ContextCancellerInterface
-	}
+func TestMessageConsumer_starting(test *testing.T) {
 	type args struct {
-		concurrency int
+		client         MessageConsumerClient
+		queue          string
+		messageHandler MessageHandler
 	}
 
 	for _, data := range []struct {
-		name            string
-		fields          fields
-		args            args
-		wantedStartMode startMode
+		name          string
+		args          args
+		startConsumer func(consumer MessageConsumer)
 	}{
 		{
-			name: "success with the messages and without concurrency",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					var messagesAsSlice []amqp.Delivery
-					for i := 0; i < 100; i++ {
-						messagesAsSlice = append(messagesAsSlice, amqp.Delivery{
-							Body: []byte(fmt.Sprintf("message #%d", i)),
-						})
+			name: "with the Start() method",
+			args: args{
+				client: func() MessageConsumerClient {
+					messagesAsSlice := []amqp.Delivery{
+						{Body: []byte("one")},
+						{Body: []byte("two")},
 					}
-
 					messages := make(chan amqp.Delivery, len(messagesAsSlice))
 					for _, message := range messagesAsSlice {
 						messages <- message
 					}
-
 					close(messages)
-					return messages
+
+					client := new(MockMessageConsumerClient)
+					client.
+						On("ConsumeMessages", "test").
+						Return((<-chan amqp.Delivery)(messages), nil)
+					client.On("CancelConsuming", "test").Return(nil)
+
+					return client
 				}(),
+				queue: "test",
 				messageHandler: func() MessageHandler {
 					messageHandler := new(MockMessageHandler)
-					for i := 0; i < 100; i++ {
-						messageHandler.
-							On("HandleMessage", amqp.Delivery{
-								Body: []byte(fmt.Sprintf("message #%d", i)),
-							}).
-							Return()
-					}
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("one")}).
+						Return()
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("two")}).
+						Return()
 
 					return messageHandler
 				}(),
-				startMode: &startModeHolder{},
-				stoppingCtxCanceller: func() ContextCancellerInterface {
-					stoppingCtxCanceller := new(MockContextCancellerInterface)
-					stoppingCtxCanceller.On("CancelContext").Return()
-
-					return stoppingCtxCanceller
-				}(),
 			},
-			args: args{
-				concurrency: 1,
+			startConsumer: func(consumer MessageConsumer) {
+				consumer.Start()
 			},
-			wantedStartMode: startedConcurrently,
 		},
 		{
-			name: "success with the messages and concurrency",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					var messagesAsSlice []amqp.Delivery
-					for i := 0; i < 100; i++ {
-						messagesAsSlice = append(messagesAsSlice, amqp.Delivery{
-							Body: []byte(fmt.Sprintf("message #%d", i)),
-						})
+			name: "with the StartConcurrently() method",
+			args: args{
+				client: func() MessageConsumerClient {
+					messagesAsSlice := []amqp.Delivery{
+						{Body: []byte("one")},
+						{Body: []byte("two")},
 					}
-
 					messages := make(chan amqp.Delivery, len(messagesAsSlice))
 					for _, message := range messagesAsSlice {
 						messages <- message
 					}
-
 					close(messages)
-					return messages
+
+					client := new(MockMessageConsumerClient)
+					client.
+						On("ConsumeMessages", "test").
+						Return((<-chan amqp.Delivery)(messages), nil)
+					client.On("CancelConsuming", "test").Return(nil)
+
+					return client
 				}(),
+				queue: "test",
 				messageHandler: func() MessageHandler {
 					messageHandler := new(MockMessageHandler)
-					for i := 0; i < 100; i++ {
-						messageHandler.
-							On("HandleMessage", amqp.Delivery{
-								Body: []byte(fmt.Sprintf("message #%d", i)),
-							}).
-							Return()
-					}
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("one")}).
+						Return()
+					messageHandler.
+						On("HandleMessage", amqp.Delivery{Body: []byte("two")}).
+						Return()
 
 					return messageHandler
 				}(),
-				startMode: &startModeHolder{},
-				stoppingCtxCanceller: func() ContextCancellerInterface {
-					stoppingCtxCanceller := new(MockContextCancellerInterface)
-					stoppingCtxCanceller.On("CancelContext").Return()
-
-					return stoppingCtxCanceller
-				}(),
 			},
-			args: args{
-				concurrency: 5,
+			startConsumer: func(consumer MessageConsumer) {
+				consumer.StartConcurrently(10)
 			},
-			wantedStartMode: startedConcurrently,
-		},
-		{
-			name: "success without messages and concurrency",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					messages := make(chan amqp.Delivery)
-					close(messages)
-
-					return messages
-				}(),
-				messageHandler: new(MockMessageHandler),
-				startMode:      &startModeHolder{},
-				stoppingCtxCanceller: func() ContextCancellerInterface {
-					stoppingCtxCanceller := new(MockContextCancellerInterface)
-					stoppingCtxCanceller.On("CancelContext").Return()
-
-					return stoppingCtxCanceller
-				}(),
-			},
-			args: args{
-				concurrency: 1,
-			},
-			wantedStartMode: startedConcurrently,
-		},
-		{
-			name: "success without messages and with concurrency",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					messages := make(chan amqp.Delivery)
-					close(messages)
-
-					return messages
-				}(),
-				messageHandler: new(MockMessageHandler),
-				startMode:      &startModeHolder{},
-				stoppingCtxCanceller: func() ContextCancellerInterface {
-					stoppingCtxCanceller := new(MockContextCancellerInterface)
-					stoppingCtxCanceller.On("CancelContext").Return()
-
-					return stoppingCtxCanceller
-				}(),
-			},
-			args: args{
-				concurrency: 5,
-			},
-			wantedStartMode: startedConcurrently,
-		},
-		{
-			name: "success with the not default start mode",
-			fields: fields{
-				messages: func() <-chan amqp.Delivery {
-					var messagesAsSlice []amqp.Delivery
-					for i := 0; i < 100; i++ {
-						messagesAsSlice = append(messagesAsSlice, amqp.Delivery{
-							Body: []byte(fmt.Sprintf("message #%d", i)),
-						})
-					}
-
-					messages := make(chan amqp.Delivery, len(messagesAsSlice))
-					for _, message := range messagesAsSlice {
-						messages <- message
-					}
-
-					close(messages)
-					return messages
-				}(),
-				messageHandler: func() MessageHandler {
-					messageHandler := new(MockMessageHandler)
-					for i := 0; i < 100; i++ {
-						messageHandler.
-							On("HandleMessage", amqp.Delivery{
-								Body: []byte(fmt.Sprintf("message #%d", i)),
-							}).
-							Return()
-					}
-
-					return messageHandler
-				}(),
-				startMode:            &startModeHolder{mode: 23},
-				stoppingCtxCanceller: new(MockContextCancellerInterface),
-			},
-			args: args{
-				concurrency: 5,
-			},
-			wantedStartMode: 23,
 		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
-			consumer := MessageConsumer{
-				messages:             data.fields.messages,
-				messageHandler:       data.fields.messageHandler,
-				startMode:            data.fields.startMode,
-				stoppingCtxCanceller: data.fields.stoppingCtxCanceller.CancelContext,
-			}
-			consumer.StartConcurrently(data.args.concurrency)
+			messageConsumer, err := NewMessageConsumer(
+				data.args.client,
+				data.args.queue,
+				data.args.messageHandler,
+			)
+			require.NoError(test, err)
+
+			go data.startConsumer(messageConsumer)
+			messageConsumer.Stop() // nolint: errcheck
 
 			mock.AssertExpectationsForObjects(
 				test,
-				data.fields.messageHandler,
-				data.fields.stoppingCtxCanceller,
+				data.args.client,
+				data.args.messageHandler,
 			)
-			assert.Equal(test, data.wantedStartMode, consumer.startMode.getStartMode())
 		})
 	}
 }
 
 func TestMessageConsumer_Stop(test *testing.T) {
 	type fields struct {
-		client      MessageConsumerClient
-		queue       string
 		stoppingCtx context.Context
+	}
+	type args struct {
+		client         MessageConsumerClient
+		queue          string
+		messageHandler MessageHandler
 	}
 
 	for _, data := range []struct {
 		name      string
 		fields    fields
+		args      args
 		wantedErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "success",
 			fields: fields{
-				client: func() MessageConsumerClient {
-					client := new(MockMessageConsumerClient)
-					client.On("CancelConsuming", "test").Return(nil)
-
-					return client
-				}(),
-				queue: "test",
 				stoppingCtx: func() context.Context {
 					ctx, canceller := context.WithCancel(context.Background())
 					canceller()
@@ -460,32 +230,65 @@ func TestMessageConsumer_Stop(test *testing.T) {
 					return ctx
 				}(),
 			},
+			args: args{
+				client: func() MessageConsumerClient {
+					messages := make(chan amqp.Delivery)
+					close(messages)
+
+					client := new(MockMessageConsumerClient)
+					client.
+						On("ConsumeMessages", "test").
+						Return((<-chan amqp.Delivery)(messages), nil)
+					client.On("CancelConsuming", "test").Return(nil)
+
+					return client
+				}(),
+				queue:          "test",
+				messageHandler: new(MockMessageHandler),
+			},
 			wantedErr: assert.NoError,
 		},
 		{
 			name: "error",
 			fields: fields{
+				stoppingCtx: context.Background(),
+			},
+			args: args{
 				client: func() MessageConsumerClient {
+					messages := make(chan amqp.Delivery)
+					close(messages)
+
 					client := new(MockMessageConsumerClient)
+					client.
+						On("ConsumeMessages", "test").
+						Return((<-chan amqp.Delivery)(messages), nil)
 					client.On("CancelConsuming", "test").Return(iotest.ErrTimeout)
 
 					return client
 				}(),
-				queue:       "test",
-				stoppingCtx: context.Background(),
+				queue:          "test",
+				messageHandler: new(MockMessageHandler),
 			},
 			wantedErr: assert.Error,
 		},
 	} {
 		test.Run(data.name, func(test *testing.T) {
-			consumer := MessageConsumer{
-				client:      data.fields.client,
-				queue:       data.fields.queue,
-				stoppingCtx: data.fields.stoppingCtx,
-			}
-			receivedErr := consumer.Stop()
+			messageConsumer, err := NewMessageConsumer(
+				data.args.client,
+				data.args.queue,
+				data.args.messageHandler,
+			)
+			require.NoError(test, err)
+			messageConsumer.stoppingCtx = data.fields.stoppingCtx
 
-			mock.AssertExpectationsForObjects(test, data.fields.client)
+			go messageConsumer.Start()
+			receivedErr := messageConsumer.Stop()
+
+			mock.AssertExpectationsForObjects(
+				test,
+				data.args.client,
+				data.args.messageHandler,
+			)
 			data.wantedErr(test, receivedErr)
 		})
 	}
